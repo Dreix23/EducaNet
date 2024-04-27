@@ -1,3 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+Antique:wght@300;400;500;700;900&display=swap');
+
+:root {
+    --font-principal: "Zen Kaku Gothic Antique", sans-serif;
+    --white: #ffffff;
+}
+
+body {
+    font-family: var(--font-principal)
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
