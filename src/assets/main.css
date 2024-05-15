@@ -1,8 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+Antique:wght@300;400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
 
 :root {
-    --font-principal: "Zen Kaku Gothic Antique", sans-serif;
+    --font-principal: "Nunito Sans", sans-serif;
     --white: #ffffff;
+    --color-text: #202224;
+    --color-primary: #2D60FF;
+     
 }
 
 body {

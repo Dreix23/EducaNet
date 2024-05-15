@@ -1,33 +1,38 @@
 <script setup>
+import { defineProps, computed } from 'vue';
+import { Sheet, FileUp, CirclePlus, CircleChevronLeft, LogIn, Plus } from 'lucide-vue-next';
+const props = defineProps({
+    iconType: {
+        type: String,
+        default: '', // Valor predeterminado para el ícono
+        validator: (value) => ['Sheet', 'FileUp', 'CirclePlus', 'CircleChevronLeft', 'LogIn', 'Plus'].includes(value)
+    },
+    buttonText: {
+        type: String,
+        default: 'Cargar Excel'
+    }
+});
 
+// Función computada que selecciona el componente ícono correcto
+const IconComponent = computed(() => {
+    const icons = {
+        Sheet: Sheet,
+        FileUp: FileUp,
+        CirclePlus: CirclePlus,
+        CircleChevronLeft: CircleChevronLeft,
+        LogIn: LogIn,
+        Plus: Plus,
+    };
+    return icons[props.iconType]; // Retorna FileUp como default si el tipo de ícono no coincide
+});
 </script>
 
 <template>
-    <button class="btn-office" type="submit" style="background: #16348C;">
-        <p>ingresar</p>
-        <svg height="21" viewBox="0 0 21 21" width="21" xmlns="http://www.w3.org/2000/svg">
-            <g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                transform="translate(4 6)">
-                <path d="m9.5.497 4 4.002-4 4.001" />
-                <path d="m.5 4.5h13" />
-            </g>
-        </svg>
+    <button
+        class="text-white inline-flex items-center bg-color-primary hover:bg-color-educanet transition-colors duration-300 ease-in-out py-[12.8px] px-[45px] rounded-[9px]">
+        <component :is="IconComponent" />
+        {{ buttonText }}
     </button>
 </template>
 
-<style>
-.btn-office {
-    width: 100%;
-    height: 72px;
-    border-radius: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 22px 40.5px;
-    font-weight: 700;
-    font-size: 16px;
-    line-height: 28.16px;
-    text-transform: uppercase;
-    color: #FFFFFF;
-}
-</style>
+<style scoped></style>

@@ -82,12 +82,12 @@ const login = async () => {
     </div>
     <div class="container-info-login">
       <div class="container-singIng" v-if="!isMobile">
-        <p>No eres miembro todava?</p><a href="#">nete ahora</a>
+        <p>No eres miembro todavía?</p><a href="#">Únete ahora</a>
       </div>
       <div class="container-form">
         <div class="form-title">
           <h2>Bienvenido a Educanet</h2>
-          <p>Inicia sesin para continuar</p>
+          <p>Inicia sesión para continuar</p>
         </div>
         <form @submit.prevent="login" class="form-login">
           <div class="input-group">
@@ -96,15 +96,17 @@ const login = async () => {
           </div>
           <div class="input-group">
             <Lock class="input-icon" />
-            <BaseInput :type="showPassword ? 'text' : 'password'" placeholder="Contrasea" v-model="password" @input="onPasswordInput" />
+            <BaseInput :type="showPassword ? 'text' : 'password'" placeholder="Contrasea" v-model="password"
+              @input="onPasswordInput" />
             <button type="button" class="password-toggle" @click="toggleShowPassword">
               <Eye v-if="!showPassword" />
               <EyeOff v-else />
             </button>
           </div>
-          <BaseButton type="submit">Login</BaseButton>
+          <BaseButton type="submit" iconType="LogIn" buttonText="Iniciar Sesión"
+            class="text-size-16 flex flex-row-reverse justify-between py-[22px] font-bold" />
         </form>
-        <a href="#">Tienes problemas con su contrasea?</a>
+        <a href="#">Tienes problemas con su contraseña?</a>
       </div>
       <div class="container-derechos" v-if="!isMobile">
         <p>Copyright 2024 EducaNet. Todos los derechos reservados</p>
