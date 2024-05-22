@@ -34,7 +34,7 @@ const routes = [
       {
         name: "profesores",
         path: "/profesores",
-        component: profesoresModul
+        component: profesoresModul,
       },
       {
         name: "seccion",
@@ -45,7 +45,7 @@ const routes = [
         name: "perfil",
         path: "/perfil",
         component: perfilModul,
-      }
+      },
     ],
   },
   {

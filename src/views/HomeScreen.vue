@@ -7,6 +7,7 @@ import { logInfo, logError, logDebug, enableLogs } from '@/utils/logger.js';
 import logoSrc from '@/assets/Logo-blue.png';
 import profileSrc from '@/assets/profile.png';
 import { Home, LayoutGrid, UsersRound, LogOut, Menu, CircleChevronDown } from 'lucide-vue-next';
+import Alert from '@/components/Alert.vue';
 import {
   initFlowbite, initAccordions,
   initCarousels,
@@ -78,6 +79,8 @@ const logout = async () => {
 </script>
 
 <template>
+
+
 
   <nav
     class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 h-[101px]">
