@@ -21,7 +21,7 @@ import {
   initTabs,
   initTooltips
 } from 'flowbite'
-import Inicio from '@/Modules/inicio.vue';
+import Inicio from '@/modules/inicio.vue';
 
 
 const user = ref(null);

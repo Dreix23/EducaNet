@@ -145,8 +145,4 @@ const toggleModal = () => {
   box-shadow: 6px 6px 54px 0px rgba(0, 0, 0, 0.05);
   padding: 25px 24px;
 }
-
-.container-info-modal {
-  background: rgba(64, 64, 64, 0.50);
-}
 </style>

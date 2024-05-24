@@ -3,11 +3,11 @@ import { auth } from "@/services/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import HomeScreen from "@/views/HomeScreen.vue";
 import LoginScreen from "@/views/LoginScreen.vue";
-import inicioModul from "@/Modules/inicio.vue";
-import aulasModul from "@/Modules/Aulas/aulas.vue";
-import secaulasModul from "@/Modules/Aulas/seccion.vue";
-import profesoresModul from "@/Modules/profesores.vue";
-import perfilModul from "@/Modules/perfil.vue";
+import inicioModul from "@/modules/inicio.vue";
+import aulasModul from "@/modules/aulas/aulas.vue";
+import secaulasModul from "@/modules/aulas/seccion.vue";
+import profesoresModul from "@/modules/profesores.vue";
+import perfilModul from "@/modules/perfil.vue";
 
 import { logInfo, logError, logDebug, enableLogs } from "@/utils/logger.js";
 

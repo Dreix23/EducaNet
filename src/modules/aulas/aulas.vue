@@ -3,7 +3,7 @@ import DashButton from '@/components/DashButton.vue';
 import GradoItem from '@/components/GradoItem.vue';
 import { ref, computed, onMounted } from 'vue';
 import * as XLSX from 'xlsx';
-import { doc, setDoc, collection, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
 
 const grupos = ref([]);
@@ -17,8 +17,8 @@ const handleFileUpload = async (event) => {
     const data = new Uint8Array(e.target.result);
     const workbook = XLSX.read(data, { type: 'array' });
 
-    const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
+    const firstSheetName = workbook.sheetNames[0];
+    const worksheet = workbook.sheets[firstSheetName];
 
     const gruposData = {};
 

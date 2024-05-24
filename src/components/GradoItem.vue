@@ -1,6 +1,7 @@
 <script setup>
 import { defineProps } from 'vue';
 import { RouterLink } from 'vue-router';
+import { computed } from 'vue';
 
 const props = defineProps({
   grade: {
@@ -13,6 +14,8 @@ const props = defineProps({
   }
 });
 
+const formattedGrade = computed(() => `${props.grade}°`);
+
 const handleSectionClick = (grade, section) => {
   localStorage.setItem('selectedGrade', grade);
   localStorage.setItem('selectedSection', section);
@@ -23,7 +26,7 @@ const handleSectionClick = (grade, section) => {
   <div class="card-section flex h-auto w-[100%] py-[16px] px-[24px] border border-gray-200">
     <div
         class="grade flex-[0.6] flex items-center border-r-[2px] max-[750px]:border-r-0 max-[750px]:border-b-[2px] max-[750px]:w-full max-[750px]:justify-center">
-      <h1 class="text-color-educanet text-size-64 font-bold mr-2">{{ grade }}</h1>
+      <h1 class="text-color-educanet text-size-64 font-bold mr-2">{{ formattedGrade }}</h1>
     </div>
     <div class="line"></div>
     <div class="sections flex-[7] pl-[27px] flex items-center gap-[15px] flex-wrap">
@@ -32,7 +35,7 @@ const handleSectionClick = (grade, section) => {
           :key="index"
           :to="`/seccion`"
           class="section-circle py-[8px] px-[18px] w-[60px] h-[60px] bg-color-gray flex justify-center items-center"
-          @click="handleSectionClick(grade, section)">
+          @click="handleSectionClick(props.grade, section)">
         <span class="text-color-white text-size-32 font-bold">{{ section }}</span>
       </RouterLink>
     </div>
