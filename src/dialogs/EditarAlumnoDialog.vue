@@ -47,6 +47,11 @@ const editarAlumno = () => {
     loading.value = false;
   }, 1000);
 };
+
+// Función para convertir el texto a mayúsculas
+const convertirAMayusculas = (event) => {
+  event.target.value = event.target.value.toUpperCase();
+};
 </script>
 <template>
   <div v-if="modalActive" class="fixed inset-0 flex items-center justify-center z-50">
@@ -65,17 +70,17 @@ const editarAlumno = () => {
           <div class="grid gap-6 mb-6">
             <div class="grid grid-cols-3 gap-4 items-center">
               <label for="nombre" class="text-sm text-gray-900">Nombre</label>
-              <input v-model="tempNombre" type="text" id="nombre" placeholder="Nombre"
+              <input v-model="tempNombre" @input="convertirAMayusculas" type="text" id="nombre" placeholder="Nombre"
                      class="col-span-2 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
             </div>
             <div class="grid grid-cols-3 gap-4 items-center">
               <label for="codigoQR" class="text-sm text-gray-900">Código QR</label>
-              <input v-model="tempQR" type="text" id="codigoQR" placeholder="Código QR"
+              <input v-model="tempQR" @input="convertirAMayusculas" type="text" id="codigoQR" placeholder="Código QR"
                      class="col-span-2 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
             </div>
             <div class="grid grid-cols-3 gap-4 items-center">
               <label for="turno" class="text-sm text-gray-900">Turno</label>
-              <input v-model="tempTurno" type="text" id="turno" placeholder="Turno"
+              <input v-model="tempTurno" @input="convertirAMayusculas" type="text" id="turno" placeholder="Turno"
                      class="col-span-2 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
             </div>
           </div>
@@ -96,7 +101,6 @@ const editarAlumno = () => {
     </div>
   </div>
 </template>
-
 <style scoped>
 /* No additional styles required */
 </style>
