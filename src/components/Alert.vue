@@ -1,19 +1,18 @@
 <script setup>
 import { defineProps, computed } from 'vue';
 import { CircleCheckBig, OctagonX, CircleAlert } from 'lucide-vue-next';
-import BaseButton from './BaseButton.vue';
 
 const props = defineProps({
-    iconType: {
+    Type: {
         type: String,
         default: '', // Valor predeterminado para el ícono
-        validator: (value) => ['CircleCheckBig', 'OctagonX', 'CircleAlert'].includes(value)
+        validator: (value) => ['alert', 'confirm', 'dialog'].includes(value)
     },
-    TitleText: {
+    TitleAlert: {
         type: String,
         default: ''
     },
-    InfoText: {
+    InfoAlert: {
         type: String,
         default: ''
     },
@@ -22,29 +21,38 @@ const props = defineProps({
         default: ''
     }
 });
-// Función computada que selecciona el componente ícono correcto
-const IconComponent = computed(() => {
-    const icons = {
-        CircleCheckBig: CircleCheckBig,
-        OctagonX: OctagonX,
-        CircleAlert: CircleAlert
-    };
-    return icons[props.iconType]; // Retorna FileUp como default si el tipo de ícono no coincide
-});
 </script>
 
 <template>
     <div class="container-target">
         <div class="target-alert flex flex-col items-center justify-center gap-[10px]">
             <div class="icon-alert w-[60px] h-[60px]">
-                <component :is="IconComponent" class="w-full h-full text-color-green" />
+                <CircleCheckBig v-if="Type === 'confirm'" class="w-full h-full text-color-green" />
+                <OctagonX v-if="Type === 'alert'" class="w-full h-full text-color-alert" />
+                <CircleAlert v-if="Type === 'dialog'" class="w-full h-full text-color-text" />
             </div>
             <div class="info-alert text-center">
-                <span class="text-color-green font-bold text-size-32">¡{{ TitleText }}!.</span>
-                <p class="text-color-text font-bold text-size-18">{{ InfoText }}</p>
+                <span v-if="Type === 'confirm'" class="text-color-green font-bold text-size-32">¡{{ TitleAlert
+                    }}!.</span>
+                <span v-if="Type === 'alert'" class="text-color-alert font-bold text-size-32">¡{{ TitleAlert }}!.</span>
+                <span v-if="Type === 'dialog'" class="text-color-text font-bold text-size-32">¡{{ TitleAlert }}!.</span>
+                <p class="text-color-text font-bold text-size-18">{{ InfoAlert }}</p>
             </div>
             <div class="action-alert">
-                <BaseButton buttonText="{{ ButonText }}" class="bg-color-green hover:bg-green-600" />
+                <button v-if="Type === 'confirm'"
+                    class="btn-alert bg-color-green hover:bg-green-600 text-color-white transition-colors duration-300 ease-in-out">{{
+                        ButonText }}</button>
+                <button v-if="Type === 'alert'"
+                    class="btn-alert bg-red-600 hover:bg-red-500 text-color-white transition-colors duration-300 ease-in-out">{{
+                        ButonText }}</button>
+                <div v-if="Type === 'dialog'" class="flex gap-[15px]">
+                    <button
+                        class="btn-alert bg-color-green hover:bg-green-600 text-color-white transition-colors duration-300 ease-in-out">{{
+                            ButonText }}</button>
+                    <button
+                        class="btn-alert bg-transparent border-[2px] border-color-green hover:bg-color-green text-color-text transition-colors duration-300 ease-in-out">Cancelar</button>
+                </div>
+
             </div>
         </div>
     </div>
@@ -52,6 +60,11 @@ const IconComponent = computed(() => {
 </template>
 
 <style scoped>
+.btn-alert {
+    border-radius: 9px;
+    padding: 12px 38px;
+}
+
 .container-target {
     position: fixed;
     z-index: 60;
@@ -72,5 +85,12 @@ const IconComponent = computed(() => {
     padding: 20px 10px;
     width: fit-content;
     border-radius: 20px;
+    width: 400px;
+}
+
+@media screen and (max-width: 750px) {
+    .target-alert {
+        width: 300px;
+    }
 }
 </style>

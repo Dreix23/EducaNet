@@ -6,7 +6,8 @@ import LoginScreen from "@/views/LoginScreen.vue";
 import inicioModul from "@/modules/inicio.vue";
 import aulasModul from "@/modules/aulas/aulas.vue";
 import secaulasModul from "@/modules/aulas/seccion.vue";
-import profesoresModul from "@/modules/profesores.vue";
+import profesoresModul from "@/modules/profesor/profesores.vue";
+import profeCode from "@/modules/profesor/profeCode.vue";
 import perfilModul from "@/modules/perfil.vue";
 
 import { logInfo, logError, logDebug, enableLogs } from "@/utils/logger.js";
@@ -40,6 +41,11 @@ const routes = [
         name: "seccion",
         path: "/seccion",
         component: secaulasModul,
+      },
+      {
+        name: "profeCode",
+        path: "/profeCode",
+        component: profeCode,
       },
       {
         name: "perfil",

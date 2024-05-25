@@ -83,7 +83,7 @@ const logout = async () => {
 
 
   <nav
-    class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 h-[101px]">
+    class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 h-[80px]">
     <div class="px-[32px] py-3 h-full flex nav-container">
       <div class="flex items-center justify-between w-full">
         <div class="flex items-center justify-start rtl:justify-end">
@@ -186,7 +186,7 @@ const logout = async () => {
     </div>
   </aside>
 
-  <div class="sm:ml-64 pt-[101px] px-10 ">
+  <div class="sm:ml-64 pt-[80px] px-10 ">
     <div class="p-5 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-[18px] bg-color-bag">
       <router-view></router-view>
     </div>
