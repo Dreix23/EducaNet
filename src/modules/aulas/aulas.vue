@@ -1,61 +1,75 @@
 <script setup>
 import DashButton from '@/components/DashButton.vue';
 import GradoItem from '@/components/GradoItem.vue';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import * as XLSX from 'xlsx';
 import { doc, setDoc, collection, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
+import { useAuth } from '@/services/userService.js';
+
+const { currentUser, userSchool } = useAuth();
 
 const grupos = ref([]);
 
 const handleFileUpload = async (event) => {
   const file = event.target.files[0];
+  console.log("Archivo seleccionado:", file); // Verifica que el archivo se selecciona
+
   if (!file) return;
 
   const reader = new FileReader();
   reader.onload = async (e) => {
-    const data = new Uint8Array(e.target.result);
-    const workbook = XLSX.read(data, { type: 'array' });
-
-    const firstSheetName = workbook.sheetNames[0];
-    const worksheet = workbook.sheets[firstSheetName];
-
-    const gruposData = {};
-
-    const range = XLSX.utils.decode_range(worksheet['!ref']);
-    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-      const grupo = worksheet[XLSX.utils.encode_cell({ c: 2, r: R })]?.v || 'Grupo desconocido';
-      if (!gruposData[grupo]) {
-        gruposData[grupo] = [];
-      }
-
-      const alumno = {
-        NOM_ALUMNO: worksheet[XLSX.utils.encode_cell({ c: 1, r: R })]?.v || 'Nombre desconocido',
-        TURNO: worksheet[XLSX.utils.encode_cell({ c: 3, r: R })]?.v || 'Turno desconocido',
-        QR: worksheet[XLSX.utils.encode_cell({ c: 4, r: R })]?.v || 'QR desconocido'
-      };
-
-      gruposData[grupo].push(alumno);
-    }
-
     try {
-      for (const grupo in gruposData) {
-        const alumnos = gruposData[grupo];
-        const docData = {};
-        alumnos.forEach((alumno, index) => {
-          docData[index] = alumno;
-        });
-        await setDoc(doc(db, 'alumnos', grupo), docData);
+      console.log("Datos del archivo leídos:", e.target.result); // Verifica que los datos del archivo se leen correctamente
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      console.log("Nombre de la primera hoja:", firstSheetName); // Verifica el nombre de la primera hoja
+
+      const gruposData = {};
+
+      const range = XLSX.utils.decode_range(worksheet['!ref']);
+      console.log("Rango de la hoja de cálculo:", range); // Verifica el rango de la hoja de cálculo
+      for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+        const grupo = worksheet[XLSX.utils.encode_cell({ c: 2, r: R })]?.v || 'Grupo desconocido';
+        if (!gruposData[grupo]) {
+          gruposData[grupo] = [];
+        }
+
+        const alumno = {
+          NOM_ALUMNO: worksheet[XLSX.utils.encode_cell({ c: 1, r: R })]?.v || 'Nombre desconocido',
+          TURNO: worksheet[XLSX.utils.encode_cell({ c: 3, r: R })]?.v || 'Turno desconocido',
+          QR: worksheet[XLSX.utils.encode_cell({ c: 4, r: R })]?.v || 'QR desconocido'
+        };
+
+        gruposData[grupo].push(alumno);
       }
-      alert('Datos cargados exitosamente');
 
-      // Actualizar los datos en el local storage después de cargarlos en Firestore
-      localStorage.setItem('gruposData', JSON.stringify(Object.keys(gruposData)));
+      console.log("Datos de los grupos:", gruposData); // Verifica los datos que se van a cargar
 
-      fetchGrupos();
+      try {
+        for (const grupo in gruposData) {
+          const alumnos = gruposData[grupo];
+          const docData = {};
+          alumnos.forEach((alumno, index) => {
+            docData[index] = alumno;
+          });
+          await setDoc(doc(db, `colegios/${userSchool.value}/alumnos/${grupo}`), docData);
+        }
+        alert('Datos cargados exitosamente');
+
+        // Actualizar los datos en el local storage después de cargarlos en Firestore
+        localStorage.setItem('gruposData', JSON.stringify(Object.keys(gruposData)));
+
+        fetchGrupos();
+      } catch (error) {
+        console.error('Error al cargar datos:', error);
+        alert('Ocurrió un error al cargar los datos. Por favor, intenta de nuevo.');
+      }
     } catch (error) {
-      console.error('Error al cargar datos:', error);
-      alert('Ocurrió un error al cargar los datos. Por favor, intenta de nuevo.');
+      console.error('Error en el procesamiento del archivo:', error);
     }
   };
 
@@ -63,6 +77,11 @@ const handleFileUpload = async (event) => {
 };
 
 const fetchGrupos = async () => {
+  if (!userSchool.value) {
+    console.log('Esperando a que se cargue el nombre de la escuela');
+    return;
+  }
+
   // Verificar si los datos existen en el local storage
   const cachedData = localStorage.getItem('gruposData');
 
@@ -72,7 +91,7 @@ const fetchGrupos = async () => {
   } else {
     // Si no existen en caché, obtenerlos de Firestore
     try {
-      const querySnapshot = await getDocs(collection(db, 'alumnos'));
+      const querySnapshot = await getDocs(collection(db, `colegios/${userSchool.value}/alumnos`));
       grupos.value = querySnapshot.docs.map(doc => doc.id);
 
       // Guardar los datos en el local storage
@@ -86,7 +105,12 @@ const fetchGrupos = async () => {
 
 // Nueva función para suscribirse a los cambios en Firestore
 const subscribeToGrupos = () => {
-  const unsubscribe = onSnapshot(collection(db, 'alumnos'), (snapshot) => {
+  if (!userSchool.value) {
+    console.log('Esperando a que se cargue el nombre de la escuela');
+    return;
+  }
+
+  const unsubscribe = onSnapshot(collection(db, `colegios/${userSchool.value}/alumnos`), (snapshot) => {
     grupos.value = snapshot.docs.map(doc => doc.id);
 
     // Actualizar el almacenamiento local cuando los datos cambian
@@ -116,9 +140,18 @@ const getGradosAndSecciones = computed(() => {
   }));
 });
 
+watch(userSchool, (newSchool) => {
+  if (newSchool) {
+    fetchGrupos();
+    subscribeToGrupos(); // Suscribirse a los cambios en tiempo real
+  }
+});
+
 onMounted(() => {
-  fetchGrupos();
-  subscribeToGrupos(); // Suscribirse a los cambios en tiempo real
+  if (userSchool.value) {
+    fetchGrupos();
+    subscribeToGrupos(); // Suscribirse a los cambios en tiempo real
+  }
 });
 </script>
 

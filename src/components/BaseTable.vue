@@ -1,9 +1,12 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { ChevronLeft, ChevronRight, FilePenLine } from 'lucide-vue-next';
 import EditarAlumnoDialog from '@/dialogs/EditarAlumnoDialog.vue';
 import { db } from '@/services/firebase';
 import { doc, updateDoc, getDoc, onSnapshot } from 'firebase/firestore';
+import { useAuth } from '@/services/userService.js';
+
+const { currentUser, userSchool } = useAuth();
 
 const props = defineProps({
   columns: {
@@ -22,16 +25,15 @@ const props = defineProps({
 
 const isLoading = ref(true);
 
-// Funciones de paginación
 const prevPage = async () => {
-  props.data.splice(0, props.data.length);
+  if (!props.pagination.hasPrevPage) return;
   props.pagination.start -= props.pagination.perPage;
   props.pagination.end -= props.pagination.perPage;
   await cargarDatosDesdeFirebase(props.pagination.start, props.pagination.perPage);
 };
 
 const nextPage = async () => {
-  props.data.splice(0, props.data.length);
+  if (!props.pagination.hasNextPage) return;
   props.pagination.start += props.pagination.perPage;
   props.pagination.end += props.pagination.perPage;
   await cargarDatosDesdeFirebase(props.pagination.start, props.pagination.perPage);
@@ -40,28 +42,36 @@ const nextPage = async () => {
 const editarModalActive = ref(false);
 const alumnoSeleccionado = ref({});
 
-// Función para abrir el modal de edición
-const toggleModal = (alumno) => {
+const toggleModal = (alumno, index) => {
   console.log("Alumno seleccionado:", alumno);
-  alumnoSeleccionado.value = { ...alumno };
-  localStorage.setItem('alumnoSeleccionado', JSON.stringify(alumno));
+  alumnoSeleccionado.value = { ...alumno, index: index };
+  localStorage.setItem('alumnoSeleccionado', JSON.stringify({ ...alumno, index: index }));
   editarModalActive.value = true;
 };
 
-// Función para cargar datos paginados desde Firebase
 const cargarDatosDesdeFirebase = async (start, perPage) => {
+  if (!userSchool.value) {
+    console.error('userSchool no está definido');
+    return;
+  }
+
+  const selectedGrade = localStorage.getItem('selectedGrade');
+  const selectedSection = localStorage.getItem('selectedSection');
+
+  if (!selectedGrade || !selectedSection) {
+    console.error('selectedGrade o selectedSection no están definidos');
+    return;
+  }
+
+  const docRef = doc(db, `colegios/${userSchool.value}/alumnos/${selectedGrade}${selectedSection}`);
   try {
     isLoading.value = true;
-    const selectedGrade = localStorage.getItem('selectedGrade');
-    const selectedSection = localStorage.getItem('selectedSection');
-
-    const docRef = doc(db, 'alumnos', `${selectedGrade}${selectedSection}`);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
       const alumnos = docSnap.data();
       const alumnosArray = Object.entries(alumnos)
-          .map(([key, value]) => ({ ...value, id: key }))
+          .map(([key, value]) => ({ ...value, index: key }))
           .slice(start - 1, start - 1 + perPage);
 
       props.data.splice(0, props.data.length, ...alumnosArray);
@@ -81,39 +91,46 @@ const cargarDatosDesdeFirebase = async (start, perPage) => {
   }
 };
 
-// Función para guardar el alumno editado
 const guardarAlumnoEditado = async (alumnoEditado) => {
   console.log("Alumno editado:", alumnoEditado);
 
   const selectedGrade = localStorage.getItem('selectedGrade');
   const selectedSection = localStorage.getItem('selectedSection');
 
-  console.log("Grado seleccionado:", selectedGrade);
-  console.log("Sección seleccionada:", selectedSection);
+  if (alumnoEditado.index !== undefined) {
+    console.log("Grado seleccionado:", selectedGrade);
+    console.log("Sección seleccionada:", selectedSection);
 
-  await updateAlumnoInFirebase(alumnoEditado, selectedGrade, selectedSection, alumnoEditado.id);
+    alumnoEditado.NOM_ALUMNO = alumnoEditado.NOM_ALUMNO.toUpperCase();
+    await updateAlumnoInFirebase(alumnoEditado, selectedGrade, selectedSection, alumnoEditado.index);
 
-  editarModalActive.value = false;
+    editarModalActive.value = false;
+  } else {
+    console.error("El índice del alumno es indefinido.");
+  }
 };
 
-// Función para actualizar el alumno en Firebase
-const updateAlumnoInFirebase = async (alumno, grade, section, alumnoId) => {
-  const docRef = doc(db, 'alumnos', `${grade}${section}`);
-  await updateDoc(docRef, { [alumnoId]: alumno });
-  console.log(`Alumno actualizado en Firebase: ${grade}${section} - ${alumnoId}`, alumno);
+const updateAlumnoInFirebase = async (alumno, grade, section, alumnoIndex) => {
+  const docRef = doc(db, `colegios/${userSchool.value}/alumnos/${grade}${section}`);
+  await updateDoc(docRef, { [alumnoIndex]: alumno });
+  console.log(`Alumno actualizado en Firebase: ${grade}${section} - ${alumnoIndex}`, alumno);
 };
 
-// Escuchar cambios en tiempo real
-onMounted(async () => {
+onMounted(() => {
   const selectedGrade = localStorage.getItem('selectedGrade');
   const selectedSection = localStorage.getItem('selectedSection');
 
-  const docRef = doc(db, 'alumnos', `${selectedGrade}${selectedSection}`);
+  if (!selectedGrade || !selectedSection) {
+    console.error('selectedGrade o selectedSection no están definidos');
+    return;
+  }
+
+  const docRef = doc(db, `colegios/${userSchool.value}/alumnos/${selectedGrade}${selectedSection}`);
   onSnapshot(docRef, (docSnap) => {
     if (docSnap.exists()) {
       const alumnos = docSnap.data();
       const alumnosArray = Object.entries(alumnos)
-          .map(([key, value]) => ({ ...value, id: key }))
+          .map(([key, value]) => ({ ...value, index: key }))
           .slice(props.pagination.start - 1, props.pagination.start - 1 + props.pagination.perPage);
 
       props.data.splice(0, props.data.length, ...alumnosArray);
@@ -130,6 +147,7 @@ onMounted(async () => {
   });
 });
 </script>
+
 <template>
   <div v-if="!isLoading" class="relative overflow-x-auto shadow-md sm:rounded-lg">
     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -144,12 +162,12 @@ onMounted(async () => {
       </thead>
       <tbody>
       <tr v-for="(row, rowIndex) in data" :key="rowIndex" class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
-        <td class="px-6 py-4 text-center">{{ rowIndex + 1 }}</td>
+        <td class="px-6 py-4 text-center">{{ pagination.start + rowIndex }}</td>
         <td class="px-6 py-4">{{ row.NOM_ALUMNO }}</td>
         <td class="px-6 py-4">{{ row.QR }}</td>
         <td class="px-6 py-4">{{ row.TURNO }}</td>
         <td class="px-6 py-4 text-center">
-          <button class="font-medium text-blue-600 dark:text-blue-500 hover:underline" @click="toggleModal(row)">
+          <button class="font-medium text-blue-600 dark:text-blue-500 hover:underline" @click="toggleModal(row, rowIndex + pagination.start - 1)">
             <FilePenLine class="hover:scale-[1.5] transition-transform duration-300 ease-in-out" />
           </button>
         </td>
@@ -184,6 +202,7 @@ onMounted(async () => {
       @editarAlumno="guardarAlumnoEditado"
   />
 </template>
+
 <style scoped>
 /* Custom styles here if needed */
 </style>
