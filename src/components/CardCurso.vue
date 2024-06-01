@@ -53,12 +53,12 @@ const fetchGradosSecciones = async () => {
       });
 
       gradosSecciones.value = Object.keys(grados)
-          .map(grado => parseInt(grado))
-          .sort((a, b) => a - b)
-          .map(grado => ({
-            grado,
-            secciones: Array.from(grados[grado.toString()])
-          }));
+        .map(grado => parseInt(grado))
+        .sort((a, b) => a - b)
+        .map(grado => ({
+          grado,
+          secciones: Array.from(grados[grado.toString()])
+        }));
 
       console.log("Grados y secciones:", gradosSecciones.value);
 
@@ -153,66 +153,68 @@ watch(selectedGrupos, saveDataToFirebase, { deep: true });
 </script>
 
 <template>
-  <div class="card-curso">
-    <div class="card-cabe">
-      <h3 class="text-size-18 font-medium">{{ curso.curso }}</h3>
-    </div>
-    <div class="card-body mt-[15px]">
-      <div class="add-control px-[10px] flex flex-col gap-[6px] items-center">
-        <div class="radio-group flex gap-4">
-          <label
-              v-for="grado in gradosSecciones"
-              :key="grado.grado"
-              class="radio-option flex items-center"
-          >
-            <input
-                type="radio"
-                :name="`grado-${curso.curso}`"
-                :value="grado.grado"
-                class="radio-input"
-                v-model="selectedGrado"
-                :disabled="!isActive"
-            >
-            <span class="ms-2">{{ grado.grado }}</span>
-          </label>
-        </div>
-        <div v-if="selectedGrado !== null" class="container-checks items-center w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg">
-          <div class="flex flex-wrap">
-            <template v-for="(seccion, idx) in (gradosSecciones.find(grado => grado.grado === selectedGrado)?.secciones || [])" :key="seccion">
-              <div v-if="idx % 5 === 0" class="w-full"></div>
-              <div class="flex items-center ps-3 w-1/5">
-                <input
-                    :id="`checkbox-${curso.curso}-${seccion}`"
-                    type="checkbox"
+  <transition name="fade" appear>
+    <div class="card-curso">
+      <div class="card-cabe">
+        <h3 class="text-size-18 font-medium">{{ curso.curso }}</h3>
+      </div>
+      <div class="card-body mt-[15px]">
+        <div class="add-control px-[10px] flex flex-col gap-[6px] items-center">
+          <div class="radio-group flex gap-4">
+            <label v-for="grado in gradosSecciones" :key="grado.grado" class="radio-option flex items-center">
+              <input type="radio" :name="`grado-${curso.curso}`" :value="grado.grado" class="radio-input"
+                v-model="selectedGrado" :disabled="!isActive">
+              <span class="ms-2">{{ grado.grado }}</span>
+            </label>
+          </div>
+          <div v-if="selectedGrado !== null"
+            class="container-checks items-center w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg">
+            <div class="flex flex-wrap">
+              <template
+                v-for="(seccion, idx) in (gradosSecciones.find(grado => grado.grado === selectedGrado)?.secciones || [])"
+                :key="seccion">
+                <div v-if="idx % 5 === 0" class="w-full"></div>
+                <div class="flex items-center ps-3 w-1/5">
+                  <input :id="`checkbox-${curso.curso}-${seccion}`" type="checkbox"
                     :value="`${selectedGrado}${seccion}`"
                     class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
-                    v-model="selectedGrupos[`${selectedGrado}${seccion}`]"
-                    :disabled="!isActive"
-                >
-                <label
-                    :for="`checkbox-${curso.curso}-${seccion}`"
-                    class="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-                >{{ seccion }}</label>
+                    v-model="selectedGrupos[`${selectedGrado}${seccion}`]" :disabled="!isActive">
+                  <label :for="`checkbox-${curso.curso}-${seccion}`"
+                    class="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ seccion }}</label>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+        <div v-if="Object.keys(selectedGrupos).length > 0"
+          class="seccion flex flex-col gap-[15px] mt-[15px] items-center px-[10px] md:px-[48px]">
+          <h3 class="text-size-18 font-medium">Grupos Seleccionados</h3>
+          <div class="container-secciones w-full flex gap-[9px] flex-wrap">
+
+            <template v-for="grupo in Object.keys(selectedGrupos)" :key="grupo">
+              <div v-if="selectedGrupos[grupo]"
+                class="section-circle py-[8px] px-[18px] w-[40px] h-[40px] bg-purple-500 flex justify-center items-center">
+                <span class="text-white text-size-20 font-bold">{{ grupo }}</span>
               </div>
             </template>
           </div>
         </div>
       </div>
-      <div v-if="Object.keys(selectedGrupos).length > 0" class="seccion flex flex-col gap-[15px] mt-[15px] items-center px-[10px] md:px-[48px]">
-        <h3 class="text-size-18 font-medium">Grupos Seleccionados</h3>
-        <div class="container-secciones w-full flex gap-[9px] flex-wrap">
-          <template v-for="grupo in Object.keys(selectedGrupos)" :key="grupo">
-            <div v-if="selectedGrupos[grupo]" class="section-circle py-[8px] px-[18px] w-[40px] h-[40px] bg-purple-500 flex justify-center items-center">
-              <span class="text-white text-size-20 font-bold">{{ grupo }}</span>
-            </div>
-          </template>
-        </div>
-      </div>
     </div>
-  </div>
+  </transition>
 </template>
 
 <style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.9s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 .card-curso {
   border-radius: 14px;
   background: #FFF;

@@ -23,6 +23,10 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       {
+        path: "",
+        redirect: "/inicio",
+      },
+      {
         name: "inicio",
         path: "/inicio",
         component: inicioModul,

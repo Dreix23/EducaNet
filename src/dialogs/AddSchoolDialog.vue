@@ -71,6 +71,7 @@ defineExpose({
 </script>
 
 <template>
+  <transition name="fade" appear>
   <div v-if="isDialogOpen" class="fixed inset-0 flex items-center justify-center z-50">
     <div class="absolute inset-0 bg-gray-900 opacity-50" @click="closeDialog"></div>
     <div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md z-10 relative">
@@ -84,42 +85,60 @@ defineExpose({
       </div>
       <form @submit.prevent="addSchool">
         <div class="mb-6 relative">
-          <SchoolIcon class="absolute left-4 top-4 text-pink-400" />
-          <input id="schoolCT" v-model="schoolCT" @input="schoolCT = toUpperCase($event.target.value)" required placeholder="Código CT del Colegio" class="w-full pl-12 pr-3 py-4 text-gray-700 border border-gray-300 rounded-full focus:outline-none focus:border-pink-500" />
+          <SchoolIcon class="absolute left-4 top-4 text-purple-400" />
+          <input id="schoolCT" v-model="schoolCT" @input="schoolCT = toUpperCase($event.target.value)" required
+            placeholder="Código CT del Colegio"
+            class="w-full pl-12 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none  focus:border-color-gray" />
         </div>
         <div class="mb-6 relative">
-          <SchoolIcon class="absolute left-4 top-4 text-pink-400" />
-          <input id="schoolName" v-model="schoolName" @input="schoolName = toUpperCase($event.target.value)" required placeholder="Nombre del Colegio" class="w-full pl-12 pr-3 py-4 text-gray-700 border border-gray-300 rounded-full focus:outline-none focus:border-pink-500" />
+          <SchoolIcon class="absolute left-4 top-4 text-purple-400" />
+          <input id="schoolName" v-model="schoolName" @input="schoolName = toUpperCase($event.target.value)" required
+            placeholder="Nombre del Colegio"
+            class="w-full pl-12 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none  focus:border-color-gray" />
         </div>
         <div class="mb-6 relative">
           <UserIcon class="absolute left-4 top-4 text-purple-400" />
-          <input id="directorName" v-model="directorName" @input="directorName = toUpperCase($event.target.value)" required placeholder="Nombre del Director" class="w-full pl-12 pr-3 py-4 text-gray-700 border border-gray-300 rounded-full focus:outline-none focus:border-purple-500" />
+          <input id="directorName" v-model="directorName" @input="directorName = toUpperCase($event.target.value)"
+            required placeholder="Nombre del Director"
+            class="w-full pl-12 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none  focus:border-color-gray" />
         </div>
         <div class="mb-6 relative">
           <MailIcon class="absolute left-4 top-4 text-purple-400" />
-          <input id="directorEmail" v-model="directorEmail" type="email" required placeholder="Email del Director" class="w-full pl-12 pr-3 py-4 text-gray-700 border border-gray-300 rounded-full focus:outline-none focus:border-purple-500" />
+          <input id="directorEmail" v-model="directorEmail" type="email" required placeholder="Email del Director"
+            class="w-full pl-12 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none  focus:border-color-gray" />
         </div>
         <div class="mb-6 relative">
           <LockIcon class="absolute left-4 top-4 text-blue-400" />
-          <input id="directorPassword" v-model="directorPassword" :type="showPassword ? 'text' : 'password'" required placeholder="Contraseña" class="w-full pl-12 pr-10 py-4 text-gray-700 border border-gray-300 rounded-full focus:outline-none focus:border-blue-500" />
-          <button type="button" @click="showPassword = !showPassword" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+          <input id="directorPassword" v-model="directorPassword" :type="showPassword ? 'text' : 'password'" required
+            placeholder="Contraseña"
+            class="w-full pl-12 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none  focus:border-color-gray" />
+          <button type="button" @click="showPassword = !showPassword"
+            class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
             <EyeIcon v-if="showPassword" class="h-5 w-5" />
             <EyeOffIcon v-else class="h-5 w-5" />
           </button>
         </div>
         <div class="flex justify-center">
-          <button type="submit" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-full" :disabled="isLoading">
+          <button type="submit" class="bg-color-primary hover:bg-color-blue transition-colors duration-300 ease-in-out text-white font-bold py-3 px-6 rounded-[9px]"
+            :disabled="isLoading">
             {{ isLoading ? 'Agregando...' : 'Agregar' }}
           </button>
         </div>
       </form>
-      <p v-if="message" class="mt-4 text-center" :class="{ 'text-green-500': !message.startsWith('Error'), 'text-red-500': message.startsWith('Error') }">
+      <p v-if="message" class="mt-4 text-center"
+        :class="{ 'text-green-500': !message.startsWith('Error'), 'text-red-500': message.startsWith('Error') }">
         {{ message }}
       </p>
     </div>
   </div>
+  </transition>
 </template>
 
 <style scoped>
-/* Estilos aquí */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
 </style>

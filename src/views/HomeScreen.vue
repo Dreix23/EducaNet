@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '@/services/firebase';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { logInfo, logError, logDebug, enableLogs } from '@/utils/logger.js';
 import logoSrc from '@/assets/Logo-blue.png';
 import profileSrc from '@/assets/profile.png';
@@ -26,6 +26,7 @@ import Inicio from '@/modules/inicio.vue';
 
 const user = ref(null);
 const router = useRouter();
+const route = useRoute()
 const isLoading = ref(true);
 
 // Estado para la ruta seleccionada
@@ -35,6 +36,8 @@ const selectedRoute = ref('');
 const selectRoute = (route) => {
   selectedRoute.value = route;
 };
+
+
 
 onMounted(() => {
   initFlowbite();
@@ -49,6 +52,14 @@ onMounted(() => {
   initPopovers();
   initTabs();
   initTooltips();
+
+
+  //Para que el btn de Inicio se mantenga seleccionado
+  if (route.path === '/') {
+    selectRoute('/inicio');
+  } else {
+    selectRoute(route.path);
+  }
 
   logInfo('Verificando estado de autenticación...');
   onAuthStateChanged(auth, (currentUser) => {
@@ -82,16 +93,15 @@ const logout = async () => {
 
 
 
-  <nav
-    class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 h-[80px]">
+  <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 h-[80px]">
     <div class="px-[32px] py-3 h-full flex nav-container">
       <div class="flex items-center justify-between w-full">
-        <div class="flex items-center justify-start rtl:justify-end">
+        <div class="flex items-center justify-start rtl:justify-end gap-[20px]">
 
           <!--Btn-Toggle -->
           <button data-drawer-target="logo-sidebar" data-drawer-toggle="logo-sidebar" aria-controls="logo-sidebar"
             type="button"
-            class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
+            class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
             <span class="sr-only">Open sidebar</span>
             <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
               xmlns="http://www.w3.org/2000/svg">
@@ -154,12 +164,12 @@ const logout = async () => {
   </nav>
 
   <aside id="logo-sidebar"
-    class="fixed top-0 left-0 z-40 w-64 h-screen pt-[110px] transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
+    class="fixed top-0 left-0 z-40 w-64 h-screen pt-[110px] transition-transform -translate-x-full bg-white border-r border-gray-200 lg:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
     aria-label="Sidebar">
     <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
       <ul class="space-y-2 font-medium">
         <li>
-          <RouterLink to="/inicio"
+          <RouterLink to="/"
             :class="['flex items-center gap-[16px] px-[15px] py-[12px] text-color-text rounded-lg dark:text-white group h-[50px] transition-colors duration-500 ease-in-out', { 'bg-color-primary text-color-white': selectedRoute === '/inicio', 'hover:text-color-white hover:bg-color-primary': selectedRoute !== '/inicio' }]"
             @click="selectRoute('/inicio')">
             <Home />
@@ -186,9 +196,9 @@ const logout = async () => {
     </div>
   </aside>
 
-  <div class="sm:ml-64 pt-[80px] px-10 ">
+  <div class="lg:ml-64 pt-[80px] px-10 ">
     <div class="p-5 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-[18px] bg-color-bag">
-      <router-view></router-view>
+      <router-view> </router-view>
     </div>
   </div>
 
@@ -206,6 +216,8 @@ const logout = async () => {
 </template>
 
 <style scoped>
+
+
 .profile-option {
   box-shadow: 0px 0px 10px #00000079;
   border-radius: 10px;

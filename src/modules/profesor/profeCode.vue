@@ -136,15 +136,16 @@ watch(userSchool, (newValue) => {
   <div class="container-info-prof flex flex-col justify-center items-center">
     <div class="prof-cabe flex justify-between items-center w-full px-4">
       <router-link to="/profesores">
-        <DashButton iconType="CircleChevronLeft" buttonText="" class="bg-white hover:bg-primary transition duration-300 ease-in-out" />
+        <DashButton iconType="CircleChevronLeft" buttonText=""
+          class="bg-white hover:bg-primary transition duration-300 ease-in-out" />
       </router-link>
       <div class="flex flex-col items-center">
         <img class="w-[60px] h-[60px] rounded-full img-prof"
-             src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="user photo">
+          src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="user photo">
         <h1 class="title-nom">{{ profesorData.nombre }}</h1>
         <p class="text-color-text">{{ profesorData.materia }}</p>
       </div>
-      <label class="switch">
+      <label class="switch ">
         <input type="checkbox" v-model="isActive">
         <span class="slider round"></span>
       </label>
@@ -153,7 +154,8 @@ watch(userSchool, (newValue) => {
       <div class="flex flex-col justify-end items-center gap-[17px]">
         <h2 class="text-size-20 font-bold">Agregar Curso</h2>
         <form @submit.prevent="addCursoToProfesor" class="max-w-sm mx-auto flex gap-[20px]">
-          <select v-model="selectedCurso" id="cursos" class="select-cursos bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+          <select v-model="selectedCurso" id="cursos"
+            class="select-cursos bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
             <option value="" disabled>Seleccionar curso</option>
             <option v-for="curso in cursos" :key="curso" :value="curso">{{ curso }}</option>
           </select>
@@ -171,13 +173,8 @@ watch(userSchool, (newValue) => {
       <div class="flex flex-col justify-end items-center gap-[17px] mt-[29px]">
         <h2 class="text-size-20 font-bold">Cursos</h2>
         <div class="container-cards-cursos flex flex-wrap gap-[26px] justify-center items-center">
-          <CardCurso
-              v-for="curso in profesorData.cursos"
-              :key="curso.curso || curso"
-              :curso="curso"
-              :isActive="isActive"
-              :profesorUID="profesorUID"
-          />
+          <CardCurso v-for="curso in profesorData.cursos" :key="curso.curso || curso" :curso="curso"
+            :isActive="isActive" :profesorUID="profesorUID" />
         </div>
       </div>
     </div>
@@ -232,12 +229,14 @@ watch(userSchool, (newValue) => {
   display: inline-block;
   width: 60px;
   height: 34px;
+
 }
 
 .switch input {
   opacity: 0;
   width: 0;
   height: 0;
+
 }
 
 .slider {
@@ -264,15 +263,15 @@ watch(userSchool, (newValue) => {
   border-radius: 50%;
 }
 
-input:checked + .slider {
+input:checked+.slider {
   background-color: #2196F3;
 }
 
-input:focus + .slider {
+input:focus+.slider {
   box-shadow: 0 0 1px #2196F3;
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
   transform: translateX(26px);
 }
 

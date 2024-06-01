@@ -1,16 +1,16 @@
 <script setup>
-import {ref, onMounted, watch, onUnmounted} from 'vue';
+import { ref, onMounted, watch, onUnmounted } from 'vue';
 import BtnExcelProf from '@/components/BtnExcelProf.vue';
-import {CirclePlus} from 'lucide-vue-next';
+import { CirclePlus } from 'lucide-vue-next';
 import ProfesorDialog from '@/dialogs/ProfesorDialog.vue';
 import ProfTable from '@/components/ProfTable.vue';
-import {collection, doc, setDoc, onSnapshot} from 'firebase/firestore';
-import {db} from '@/services/firebase.js';
-import {getAuth, createUserWithEmailAndPassword, updateCurrentUser} from 'firebase/auth';
-import {useAuth} from '@/services/userService.js';
-import {getStorage, ref as storageRef, uploadBytes, getDownloadURL} from 'firebase/storage';
+import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/services/firebase.js';
+import { getAuth, createUserWithEmailAndPassword, updateCurrentUser } from 'firebase/auth';
+import { useAuth } from '@/services/userService.js';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-const {userSchool} = useAuth();
+const { userSchool } = useAuth();
 
 // Estado del modal
 const modalActive = ref(false);
@@ -21,7 +21,7 @@ const profesores = ref([]);
 // Función para abrir/cerrar el modal y determinar si es para agregar o editar
 const toggleModal = (profesor = null) => {
   modalActive.value = !modalActive.value;
-  profesorSeleccionado.value = profesor ? {...profesor, password: profesor.password || ''} : {};
+  profesorSeleccionado.value = profesor ? { ...profesor, password: profesor.password || '' } : {};
   isEditing.value = profesor ? true : false;
   if (profesor && profesor.id) {
     localStorage.setItem('selectedProfessorUID', profesor.id);
@@ -80,7 +80,7 @@ const fetchProfesores = () => {
   if (!userSchool.value) return;
 
   unsubscribe = onSnapshot(collection(db, `colegios/${userSchool.value}/profesores`), (querySnapshot) => {
-    profesores.value = querySnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+    profesores.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   });
 };
 
@@ -103,11 +103,11 @@ onUnmounted(() => {
 
 // Definición de columnas
 const columns = ref([
-  {name: '#', align: 'center'},
-  {name: 'CÓDIGO', align: 'left'},
-  {name: 'NOMBRE', align: 'left'},
-  {name: 'CORREO', align: 'left'},
-  {name: 'ACCIONES', align: 'center'}
+  { name: '#', align: 'center' },
+  { name: 'CÓDIGO', align: 'left' },
+  { name: 'NOMBRE', align: 'left' },
+  { name: 'CORREO', align: 'left' },
+  { name: 'ACCIONES', align: 'center' }
 ]);
 
 const pagination = ref({
@@ -151,16 +151,16 @@ updateTableData();
 <template>
   <div class="flex gap-4">
     <BtnExcelProf iconType="FileUp" buttonText="Cargar Excel"
-                  class="bg-white hover:bg-green-500 text-black hover:text-white rounded-lg shadow-md"/>
+      class="bg-white hover:bg-green-500 text-black hover:text-white rounded-lg shadow-md" />
     <button @click="toggleModal()"
-            class="py-3 px-5 flex justify-center items-center gap-2 text-lg font-semibold bg-white hover:bg-green-500 text-black hover:text-white rounded-lg shadow-md">
-      <CirclePlus/>
+      class="py-3 px-5 flex justify-center items-center gap-2 text-lg font-semibold bg-white hover:bg-green-500 text-black hover:text-white rounded-lg shadow-md transition-colors duration-300 ease-in-out">
+      <CirclePlus />
     </button>
   </div>
   <ProfesorDialog :modalActive="modalActive" :profesorSeleccionado="profesorSeleccionado" :isEditing="isEditing"
-                  @closeModal="toggleModal" @guardarProfesor="guardarProfesor"/>
+    @closeModal="toggleModal" @guardarProfesor="guardarProfesor" />
   <div class="mt-6 bg-white rounded-lg shadow-md p-6">
-    <ProfTable :columns="columns" :data="pagination.data" :pagination="pagination"/>
+    <ProfTable :columns="columns" :data="pagination.data" :pagination="pagination" />
   </div>
 </template>
 <style scoped>
