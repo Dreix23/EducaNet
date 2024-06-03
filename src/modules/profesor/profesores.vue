@@ -4,7 +4,7 @@ import BtnExcelProf from '@/components/BtnExcelProf.vue';
 import { CirclePlus } from 'lucide-vue-next';
 import ProfesorDialog from '@/dialogs/ProfesorDialog.vue';
 import ProfTable from '@/components/ProfTable.vue';
-import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
 import { getAuth, createUserWithEmailAndPassword, updateCurrentUser } from 'firebase/auth';
 import { useAuth } from '@/services/userService.js';
@@ -53,17 +53,14 @@ const guardarProfesor = async (profesor) => {
     const userCredential = await createUserWithEmailAndPassword(auth, profesor.correo, profesor.password);
     const newUser = userCredential.user;
 
-    if (profesor.archivoExcel) {
-      const downloadURL = await cargarArchivoExcel(profesor.archivoExcel);
-      profesor.archivoExcelURL = downloadURL;
-    }
-
-    // Guardar datos del profesor en Firestore
-    await setDoc(doc(db, `colegios/${userSchool.value}/profesores`, newUser.uid), {
-      cod: profesor.cod,
-      nombre: profesor.nombre,
-      correo: profesor.correo,
-      archivoExcelURL: profesor.archivoExcelURL || null,
+    // Guardar datos del profesor en la colección "users"
+    await setDoc(doc(db, 'users', newUser.uid), {
+      code: profesor.cod,
+      name: profesor.nombre,
+      email: profesor.correo,
+      password: profesor.password,
+      school: userSchool.value, // Agregar el nombre del colegio
+      role: 'profesor' // Agregar el rol del usuario
     });
 
     // Restaurar el usuario autenticado actual
@@ -79,9 +76,12 @@ let unsubscribe = null;
 const fetchProfesores = () => {
   if (!userSchool.value) return;
 
-  unsubscribe = onSnapshot(collection(db, `colegios/${userSchool.value}/profesores`), (querySnapshot) => {
-    profesores.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  });
+  unsubscribe = onSnapshot(
+      query(collection(db, 'users'), where('school', '==', userSchool.value), where('role', '==', 'profesor')),
+      (querySnapshot) => {
+        profesores.value = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      }
+  );
 };
 
 // Observa cambios en userSchool y actualiza la lista de profesores
@@ -104,10 +104,10 @@ onUnmounted(() => {
 // Definición de columnas
 const columns = ref([
   { name: '#', align: 'center' },
-  { name: 'CÓDIGO', align: 'left' },
-  { name: 'NOMBRE', align: 'left' },
-  { name: 'CORREO', align: 'left' },
-  { name: 'ACCIONES', align: 'center' }
+  { name: 'CODE', align: 'left' },
+  { name: 'NAME', align: 'left' },
+  { name: 'EMAIL', align: 'left' },
+  { name: 'ACTIONS', align: 'center' }
 ]);
 
 const pagination = ref({
@@ -151,18 +151,18 @@ updateTableData();
 <template>
   <div class="flex gap-4">
     <BtnExcelProf iconType="FileUp" buttonText="Cargar Excel"
-      class="bg-white hover:bg-green-500 text-black hover:text-white rounded-lg shadow-md" />
+                  class="bg-white hover:bg-green-500 text-black hover:text-white rounded-lg shadow-md" />
     <button @click="toggleModal()"
-      class="py-3 px-5 flex justify-center items-center gap-2 text-lg font-semibold bg-white hover:bg-green-500 text-black hover:text-white rounded-lg shadow-md transition-colors duration-300 ease-in-out">
+            class="py-3 px-5 flex justify-center items-center gap-2 text-lg font-semibold bg-white hover:bg-green-500 text-black hover:text-white rounded-lg shadow-md transition-colors duration-300 ease-in-out">
       <CirclePlus />
     </button>
   </div>
   <ProfesorDialog :modalActive="modalActive" :profesorSeleccionado="profesorSeleccionado" :isEditing="isEditing"
-    @closeModal="toggleModal" @guardarProfesor="guardarProfesor" />
+                  @closeModal="toggleModal" @guardarProfesor="guardarProfesor" />
   <div class="mt-6 bg-white rounded-lg shadow-md p-6">
     <ProfTable :columns="columns" :data="pagination.data" :pagination="pagination" />
   </div>
 </template>
 <style scoped>
-/* Custom styles can be added here if needed */
+/* */
 </style>

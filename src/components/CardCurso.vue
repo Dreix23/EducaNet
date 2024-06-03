@@ -53,12 +53,12 @@ const fetchGradosSecciones = async () => {
       });
 
       gradosSecciones.value = Object.keys(grados)
-        .map(grado => parseInt(grado))
-        .sort((a, b) => a - b)
-        .map(grado => ({
-          grado,
-          secciones: Array.from(grados[grado.toString()])
-        }));
+          .map(grado => parseInt(grado))
+          .sort((a, b) => a - b)
+          .map(grado => ({
+            grado,
+            secciones: Array.from(grados[grado.toString()])
+          }));
 
       console.log("Grados y secciones:", gradosSecciones.value);
 
@@ -76,7 +76,7 @@ const fetchGradosSecciones = async () => {
 
 const fetchSelectedData = async () => {
   try {
-    const profesorDocRef = doc(db, `colegios/${userSchool.value}/profesores`, props.profesorUID);
+    const profesorDocRef = doc(db, 'users', props.profesorUID);
     const profesorDocSnap = await getDoc(profesorDocRef);
     if (profesorDocSnap.exists()) {
       const profesorData = profesorDocSnap.data();
@@ -98,7 +98,7 @@ const fetchSelectedData = async () => {
 const saveDataToFirebase = async () => {
   if (props.isActive) {
     try {
-      const profesorDocRef = doc(db, `colegios/${userSchool.value}/profesores`, props.profesorUID);
+      const profesorDocRef = doc(db, 'users', props.profesorUID);
       const profesorDocSnap = await getDoc(profesorDocRef);
       if (profesorDocSnap.exists()) {
         const profesorData = profesorDocSnap.data();

@@ -1,15 +1,15 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
-import { doc, getDoc, updateDoc, arrayUnion, onSnapshot } from 'firebase/firestore';
-import { db } from '@/services/firebase.js';
-import { useAuth } from '@/services/userService.js';
+import {ref, onMounted, watch} from 'vue';
+import {doc, getDoc, updateDoc, arrayUnion, onSnapshot} from 'firebase/firestore';
+import {db} from '@/services/firebase.js';
+import {useAuth} from '@/services/userService.js';
 import DashButton from '@/components/DashButton.vue';
 import CardCurso from '@/components/CardCurso.vue';
-import { CirclePlus, Loader } from 'lucide-vue-next';
+import {CirclePlus, Loader} from 'lucide-vue-next';
 import Alert from '@/components/Alert.vue';
-import { getAuth } from 'firebase/auth';
+import {getAuth} from 'firebase/auth';
 
-const { userSchool } = useAuth();
+const {userSchool} = useAuth();
 const profesorUID = ref(null);
 const profesorData = ref({});
 const selectedCurso = ref('');
@@ -25,7 +25,7 @@ const isLoading = ref(false);
 const fetchProfesorData = async (uid) => {
   console.log("Fetching data for UID:", uid);
   try {
-    const docRef = doc(db, `colegios/${userSchool.value}/profesores`, uid);
+    const docRef = doc(db, 'users', uid);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       profesorData.value = docSnap.data();
@@ -50,7 +50,7 @@ const fetchUserSchool = async () => {
       const userDocSnap = await getDoc(userDocRef);
       if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
-        userSchool.value = userData.school;
+        userSchool.value = userData.colegio;
         console.log('School:', userSchool.value);
         if (profesorUID.value) {
           // Verificar si los datos existen en el local storage
@@ -74,12 +74,16 @@ const fetchUserSchool = async () => {
 
 const addCursoToProfesor = async (event) => {
   event.preventDefault();
+  if (!isActive.value) {
+    console.log('El switch está desactivado. No se puede agregar el curso.');
+    return;
+  }
   if (selectedCurso.value && profesorUID.value) {
     isLoading.value = true;
     try {
-      const profesorDocRef = doc(db, `colegios/${userSchool.value}/profesores`, profesorUID.value);
+      const profesorDocRef = doc(db, 'users', profesorUID.value);
       await updateDoc(profesorDocRef, {
-        cursos: arrayUnion({ curso: selectedCurso.value })
+        cursos: arrayUnion({curso: selectedCurso.value})
       });
       fetchProfesorData(profesorUID.value);
       console.log('Curso agregado:', selectedCurso.value);
@@ -92,12 +96,12 @@ const addCursoToProfesor = async (event) => {
 };
 
 const subscribeToProfesorData = () => {
-  if (!userSchool.value || !profesorUID.value) {
-    console.log('Esperando a que se cargue el nombre de la escuela y el UID del profesor');
+  if (!profesorUID.value) {
+    console.log('Esperando a que se cargue el UID del profesor');
     return;
   }
 
-  const unsubscribe = onSnapshot(doc(db, `colegios/${userSchool.value}/profesores`, profesorUID.value), (doc) => {
+  const unsubscribe = onSnapshot(doc(db, 'users', profesorUID.value), (doc) => {
     if (doc.exists()) {
       profesorData.value = doc.data();
       // Actualizar el almacenamiento local cuando los datos cambian
@@ -117,32 +121,31 @@ onMounted(() => {
   subscribeToProfesorData();
 });
 
-watch(userSchool, (newValue) => {
-  if (newValue && profesorUID.value) {
+watch(profesorUID, (newValue) => {
+  if (newValue) {
     // Verificar si los datos existen en el local storage
-    const cachedData = localStorage.getItem(`profesorData_${profesorUID.value}`);
+    const cachedData = localStorage.getItem(`profesorData_${newValue}`);
     if (cachedData) {
       // Si los datos existen en caché, usarlos
       profesorData.value = JSON.parse(cachedData);
     } else {
       // Si no existen en caché, obtenerlos de Firestore
-      fetchProfesorData(profesorUID.value);
+      fetchProfesorData(newValue);
     }
   }
 });
 </script>
-
 <template>
   <div class="container-info-prof flex flex-col justify-center items-center">
     <div class="prof-cabe flex justify-between items-center w-full px-4">
       <router-link to="/profesores">
         <DashButton iconType="CircleChevronLeft" buttonText=""
-          class="bg-white hover:bg-primary transition duration-300 ease-in-out" />
+                    class="bg-white hover:bg-primary transition duration-300 ease-in-out"/>
       </router-link>
       <div class="flex flex-col items-center">
         <img class="w-[60px] h-[60px] rounded-full img-prof"
-          src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="user photo">
-        <h1 class="title-nom">{{ profesorData.nombre }}</h1>
+             src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="user photo">
+        <h1 class="title-nom">{{ profesorData.name }}</h1>
         <p class="text-color-text">{{ profesorData.materia }}</p>
       </div>
       <label class="switch ">
@@ -155,32 +158,32 @@ watch(userSchool, (newValue) => {
         <h2 class="text-size-20 font-bold">Agregar Curso</h2>
         <form @submit.prevent="addCursoToProfesor" class="max-w-sm mx-auto flex gap-[20px]">
           <select v-model="selectedCurso" id="cursos"
-            class="select-cursos bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                  class="select-cursos bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"
+                  :disabled="!isActive">
             <option value="" disabled>Seleccionar curso</option>
             <option v-for="curso in cursos" :key="curso" :value="curso">{{ curso }}</option>
           </select>
-          <button type="submit" :disabled="isLoading">
+          <button type="submit" :disabled="isLoading || !isActive">
             <template v-if="isLoading">
-              <Loader class="w-[30px] h-[30px] animate-spin" />
+              <Loader class="w-[30px] h-[30px] animate-spin"/>
             </template>
             <template v-else>
-              <CirclePlus class="w-[30px] h-[30px] hover:scale-125 transition-transform duration-300 ease-in-out" />
+              <CirclePlus class="w-[30px] h-[30px] hover:scale-125 transition-transform duration-300 ease-in-out"/>
             </template>
           </button>
         </form>
       </div>
-
       <div class="flex flex-col justify-end items-center gap-[17px] mt-[29px]">
         <h2 class="text-size-20 font-bold">Cursos</h2>
         <div class="container-cards-cursos flex flex-wrap gap-[26px] justify-center items-center">
           <CardCurso v-for="curso in profesorData.cursos" :key="curso.curso || curso" :curso="curso"
-            :isActive="isActive" :profesorUID="profesorUID" />
+                     :isActive="isActive" :profesorUID="profesorUID"/>
         </div>
       </div>
     </div>
+
   </div>
 </template>
-
 <style scoped>
 .prof-body {
   padding: 25px 24px;
@@ -263,15 +266,15 @@ watch(userSchool, (newValue) => {
   border-radius: 50%;
 }
 
-input:checked+.slider {
+input:checked + .slider {
   background-color: #2196F3;
 }
 
-input:focus+.slider {
+input:focus + .slider {
   box-shadow: 0 0 1px #2196F3;
 }
 
-input:checked+.slider:before {
+input:checked + .slider:before {
   transform: translateX(26px);
 }
 
