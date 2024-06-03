@@ -9,6 +9,12 @@ import secaulasModul from "@/modules/aulas/seccion.vue";
 import profesoresModul from "@/modules/profesor/profesores.vue";
 import profeCode from "@/modules/profesor/profeCode.vue";
 import perfilModul from "@/modules/perfil.vue";
+import ProfeScreen from "@/views/ProfeScreem.vue";
+import ProfeIncio from "@/modules/profesor/profeInicio.vue";
+import ProfeSection from "@/modules/profesor/profSection.vue";
+import Tarea from "@/modules/profesor/tarea.vue";
+import Asistencia from "@/modules/profesor/asistencias.vue";
+import Avisos from "@/modules/profesor/avisos.vue";
 
 import { logInfo, logError, logDebug, enableLogs } from "@/utils/logger.js";
 
@@ -55,6 +61,47 @@ const routes = [
         name: "perfil",
         path: "/perfil",
         component: perfilModul,
+      },
+    ],
+  },
+  {
+    path: "/profescreen",
+    component: ProfeScreen,
+    children: [
+      {
+        path: "",
+        redirect: "/ProfeIncio",
+      },
+      {
+        name: "ProfeIncio",
+        path: "/ProfeIncio",
+        component: ProfeIncio,
+      },
+      {
+        name: "section",
+        path: "/section",
+        component: ProfeSection,
+        children: [
+          {
+            path: "",
+            redirect: "/tarea",
+          },
+          {
+            name: "tarea",
+            path: "/tarea",
+            component: Tarea,
+          },
+          {
+            name: "avisos",
+            path: "/avisos",
+            component: Avisos,
+          },
+          {
+            name: "asistencia",
+            path: "/asistencia",
+            component: Asistencia,
+          },
+        ],
       },
     ],
   },

@@ -90,9 +90,6 @@ const logout = async () => {
 </script>
 
 <template>
-
-
-
   <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 h-[80px]">
     <div class="px-[32px] py-3 h-full flex nav-container">
       <div class="flex items-center justify-between w-full">
@@ -162,7 +159,7 @@ const logout = async () => {
       </div>
     </div>
   </nav>
-
+  
   <aside id="logo-sidebar"
     class="fixed top-0 left-0 z-40 w-64 h-screen pt-[110px] transition-transform -translate-x-full bg-white border-r border-gray-200 lg:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
     aria-label="Sidebar">
@@ -216,8 +213,6 @@ const logout = async () => {
 </template>
 
 <style scoped>
-
-
 .profile-option {
   box-shadow: 0px 0px 10px #00000079;
   border-radius: 10px;
