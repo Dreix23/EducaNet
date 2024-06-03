@@ -96,7 +96,7 @@ const login = async () => {
           </div>
           <div class="input-group">
             <Lock class="input-icon" />
-            <BaseInput :type="showPassword ? 'text' : 'password'" placeholder="Contrasea" v-model="password"
+            <BaseInput :type="showPassword ? 'text' : 'password'" placeholder="Contraseña" v-model="password"
               @input="onPasswordInput" />
             <button type="button" class="password-toggle" @click="toggleShowPassword">
               <Eye v-if="!showPassword" />

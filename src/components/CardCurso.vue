@@ -1,8 +1,24 @@
 <script setup>
+import { useRoute } from 'vue-router';
 import { ref, onMounted, watch } from 'vue';
 import { getDocs, collection, doc, getDoc, updateDoc, arrayUnion, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
 import { useAuth } from '@/services/userService.js';
+
+const route = useRoute();
+const routeName = ref('');
+
+const updateRouteName = () => {
+  routeName.value = route.path.split('/').pop();
+};
+
+// Actualizar el nombre de la ruta al montar el componente
+updateRouteName();
+
+// Observar cambios en la ruta
+watch(route, () => {
+  updateRouteName();
+});
 
 const { userSchool } = useAuth();
 
@@ -159,7 +175,7 @@ watch(selectedGrupos, saveDataToFirebase, { deep: true });
         <h3 class="text-size-18 font-medium">{{ curso.curso }}</h3>
       </div>
       <div class="card-body mt-[15px]">
-        <div class="add-control px-[10px] flex flex-col gap-[6px] items-center">
+        <div class="add-control px-[10px] flex flex-col gap-[6px] items-center" v-if="routeName !== 'ProfeIncio'">
           <div class="radio-group flex gap-4">
             <label v-for="grado in gradosSecciones" :key="grado.grado" class="radio-option flex items-center">
               <input type="radio" :name="`grado-${curso.curso}`" :value="grado.grado" class="radio-input"
@@ -167,6 +183,7 @@ watch(selectedGrupos, saveDataToFirebase, { deep: true });
               <span class="ms-2">{{ grado.grado }}</span>
             </label>
           </div>
+
           <div v-if="selectedGrado !== null"
             class="container-checks items-center w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg">
             <div class="flex flex-wrap">
@@ -185,17 +202,19 @@ watch(selectedGrupos, saveDataToFirebase, { deep: true });
               </template>
             </div>
           </div>
+
         </div>
         <div v-if="Object.keys(selectedGrupos).length > 0"
           class="seccion flex flex-col gap-[15px] mt-[15px] items-center px-[10px] md:px-[48px]">
-          <h3 class="text-size-18 font-medium">Grupos Seleccionados</h3>
+          <h3 class="text-size-18 font-medium" v-if="routeName !== 'ProfeIncio'">Grupos Seleccionados</h3>
+          <h3 class="text-size-18 font-medium" v-if="routeName === 'ProfeIncio'">Secciones Asignadas</h3>
           <div class="container-secciones w-full flex gap-[9px] flex-wrap">
 
             <template v-for="grupo in Object.keys(selectedGrupos)" :key="grupo">
-              <div v-if="selectedGrupos[grupo]"
+              <router-link to="/section" v-if="selectedGrupos[grupo]"
                 class="section-circle py-[8px] px-[18px] w-[40px] h-[40px] bg-purple-500 flex justify-center items-center">
                 <span class="text-white text-size-20 font-bold">{{ grupo }}</span>
-              </div>
+              </router-link>
             </template>
           </div>
         </div>
