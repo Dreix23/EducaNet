@@ -1,4 +1,4 @@
-<!-- src/dialogs/AddSchoolDialog.vue -->
+<!-- src/dialogs/SchoolDialog.vue -->
 <script setup>
 import { ref } from 'vue';
 import { auth, db } from '@/services/firebase';
@@ -50,7 +50,8 @@ const addSchool = async () => {
       email: directorEmail.value,
       role: 'director',
       status: 'active',
-      school: schoolCT.value
+      school: schoolCT.value,
+      schoolName: schoolName.value
     });
 
     message.value = 'Colegio y director creados exitosamente';
@@ -79,7 +80,7 @@ defineExpose({
           <h2 class="text-2xl font-bold text-blue-600 text-center flex-grow">Nuevo Colegio</h2>
           <button @click="closeDialog" class="text-gray-500 hover:text-gray-700 ml-4">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
+                 stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -88,47 +89,47 @@ defineExpose({
           <div class="mb-6 relative">
             <SchoolIcon class="absolute left-4 top-4 text-purple-400" />
             <input id="schoolCT" v-model="schoolCT" @input="schoolCT = toUpperCase($event.target.value)" required
-              placeholder="Código CT del Colegio"
-              class="w-full pl-12 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none  focus:border-color-gray" />
+                   placeholder="Código CT del Colegio"
+                   class="w-full pl-12 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none  focus:border-color-gray" />
           </div>
           <div class="mb-6 relative">
             <SchoolIcon class="absolute left-4 top-4 text-purple-400" />
             <input id="schoolName" v-model="schoolName" @input="schoolName = toUpperCase($event.target.value)" required
-              placeholder="Nombre del Colegio"
-              class="w-full pl-12 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none  focus:border-color-gray" />
+                   placeholder="Nombre del Colegio"
+                   class="w-full pl-12 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none  focus:border-color-gray" />
           </div>
           <div class="mb-6 relative">
             <UserIcon class="absolute left-4 top-4 text-purple-400" />
             <input id="directorName" v-model="directorName" @input="directorName = toUpperCase($event.target.value)"
-              required placeholder="Nombre del Director"
-              class="w-full pl-12 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none  focus:border-color-gray" />
+                   required placeholder="Nombre del Director"
+                   class="w-full pl-12 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none  focus:border-color-gray" />
           </div>
           <div class="mb-6 relative">
             <MailIcon class="absolute left-4 top-4 text-purple-400" />
             <input id="directorEmail" v-model="directorEmail" type="email" required placeholder="Email del Director"
-              class="w-full pl-12 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none  focus:border-color-gray" />
+                   class="w-full pl-12 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none  focus:border-color-gray" />
           </div>
           <div class="mb-6 relative">
             <LockIcon class="absolute left-4 top-4 text-blue-400" />
             <input id="directorPassword" v-model="directorPassword" :type="showPassword ? 'text' : 'password'" required
-              placeholder="Contraseña"
-              class="w-full pl-12 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none  focus:border-color-gray" />
+                   placeholder="Contraseña"
+                   class="w-full pl-12 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none  focus:border-color-gray" />
             <button type="button" @click="showPassword = !showPassword"
-              class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                    class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
               <EyeIcon v-if="showPassword" class="h-5 w-5" />
               <EyeOffIcon v-else class="h-5 w-5" />
             </button>
           </div>
           <div class="flex justify-center">
             <button type="submit"
-              class="bg-color-primary hover:bg-color-blue transition-colors duration-300 ease-in-out text-white font-bold py-3 px-6 rounded-[9px]"
-              :disabled="isLoading">
+                    class="bg-color-primary hover:bg-color-blue transition-colors duration-300 ease-in-out text-white font-bold py-3 px-6 rounded-[9px]"
+                    :disabled="isLoading">
               {{ isLoading ? 'Agregando...' : 'Agregar' }}
             </button>
           </div>
         </form>
         <p v-if="message" class="mt-4 text-center"
-          :class="{ 'text-green-500': !message.startsWith('Error'), 'text-red-500': message.startsWith('Error') }">
+           :class="{ 'text-green-500': !message.startsWith('Error'), 'text-red-500': message.startsWith('Error') }">
           {{ message }}
         </p>
       </div>
@@ -137,13 +138,4 @@ defineExpose({
 </template>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.5s;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
 </style>
