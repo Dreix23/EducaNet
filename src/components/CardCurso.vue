@@ -179,25 +179,25 @@ watch(selectedGrupos, saveDataToFirebase, { deep: true });
           <div class="radio-group flex gap-4">
             <label v-for="grado in gradosSecciones" :key="grado.grado" class="radio-option flex items-center">
               <input type="radio" :name="`grado-${curso.curso}`" :value="grado.grado" class="radio-input"
-                v-model="selectedGrado" :disabled="!isActive">
+                     v-model="selectedGrado" :disabled="!isActive">
               <span class="ms-2">{{ grado.grado }}</span>
             </label>
           </div>
 
           <div v-if="selectedGrado !== null"
-            class="container-checks items-center w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg">
+               class="container-checks items-center w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg">
             <div class="flex flex-wrap">
               <template
-                v-for="(seccion, idx) in (gradosSecciones.find(grado => grado.grado === selectedGrado)?.secciones || [])"
-                :key="seccion">
+                  v-for="(seccion, idx) in (gradosSecciones.find(grado => grado.grado === selectedGrado)?.secciones || [])"
+                  :key="seccion">
                 <div v-if="idx % 5 === 0" class="w-full"></div>
                 <div class="flex items-center ps-3 w-1/5">
                   <input :id="`checkbox-${curso.curso}-${seccion}`" type="checkbox"
-                    :value="`${selectedGrado}${seccion}`"
-                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
-                    v-model="selectedGrupos[`${selectedGrado}${seccion}`]" :disabled="!isActive">
+                         :value="`${selectedGrado}${seccion}`"
+                         class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
+                         v-model="selectedGrupos[`${selectedGrado}${seccion}`]" :disabled="!isActive">
                   <label :for="`checkbox-${curso.curso}-${seccion}`"
-                    class="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ seccion }}</label>
+                         class="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ seccion }}</label>
                 </div>
               </template>
             </div>
@@ -205,14 +205,14 @@ watch(selectedGrupos, saveDataToFirebase, { deep: true });
 
         </div>
         <div v-if="Object.keys(selectedGrupos).length > 0"
-          class="seccion flex flex-col gap-[15px] mt-[15px] items-center px-[10px] md:px-[48px]">
+             class="seccion flex flex-col gap-[15px] mt-[15px] items-center px-[10px] md:px-[48px]">
           <h3 class="text-size-18 font-medium" v-if="routeName !== 'ProfeIncio'">Grupos Seleccionados</h3>
           <h3 class="text-size-18 font-medium" v-if="routeName === 'ProfeIncio'">Secciones Asignadas</h3>
           <div class="container-secciones w-full flex gap-[9px] flex-wrap">
 
             <template v-for="grupo in Object.keys(selectedGrupos)" :key="grupo">
               <router-link to="/section" v-if="selectedGrupos[grupo]"
-                class="section-circle py-[8px] px-[18px] w-[40px] h-[40px] bg-purple-500 flex justify-center items-center">
+                           class="section-circle py-[8px] px-[18px] w-[40px] h-[40px] bg-purple-500 flex justify-center items-center">
                 <span class="text-white text-size-20 font-bold">{{ grupo }}</span>
               </router-link>
             </template>
@@ -224,15 +224,6 @@ watch(selectedGrupos, saveDataToFirebase, { deep: true });
 </template>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.9s;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
 
 .card-curso {
   border-radius: 14px;
@@ -249,17 +240,6 @@ watch(selectedGrupos, saveDataToFirebase, { deep: true });
   align-items: center;
   padding: 16px 10px 0 10px;
   position: relative;
-}
-
-.btn-x {
-  position: absolute;
-  right: 10px;
-  cursor: pointer;
-  transition: .3s transform ease-in-out;
-}
-
-.btn-x:hover {
-  transform: scale(1.2);
 }
 
 .radio-group {
@@ -286,9 +266,6 @@ watch(selectedGrupos, saveDataToFirebase, { deep: true });
 }
 
 @media screen and (max-width: 750px) {
-  .select-cursos {
-    width: auto;
-  }
 
   .card-curso {
     width: auto;
@@ -299,11 +276,6 @@ watch(selectedGrupos, saveDataToFirebase, { deep: true });
     width: auto;
     max-width: none;
   }
-}
-
-.option-check {
-  flex: 1;
-  max-width: 69.5px;
 }
 
 .section-circle {

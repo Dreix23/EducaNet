@@ -27,19 +27,21 @@ export function useAuth() {
                     const userDocSnap = await getDoc(userDocRef);
 
                     if (userDocSnap.exists()) {
-                        // Obtener los campos "school", "schoolName" y "role" del documento
+                        // Obtener los campos "school", "schoolName", "role" y "name" del documento
                         const userData = userDocSnap.data();
                         userSchool.value = userData.school;
                         userSchoolName.value = userData.schoolName;
                         userRole.value = userData.role;
+                        currentUser.value.displayName = userData.name; // Asignar el nombre del usuario
                         console.log('School:', userSchool.value);
                         console.log('School Name:', userSchoolName.value);
                         console.log('Role:', userRole.value);
+                        console.log('User Name:', currentUser.value.displayName);
                     } else {
                         console.log('No such document!');
                     }
                 } catch (error) {
-                    console.error('Error fetching user school:', error);
+                    console.error('Error fetching user data:', error);
                 }
             } else {
                 console.log('No authenticated user');
