@@ -6,6 +6,8 @@ import { db } from '@/services/firebase.js';
 
 const currentUser = ref(null);
 const userSchool = ref(null);
+const userSchoolName = ref(null);
+const userRole = ref(null);
 
 export function useAuth() {
     const auth = getAuth();
@@ -25,10 +27,14 @@ export function useAuth() {
                     const userDocSnap = await getDoc(userDocRef);
 
                     if (userDocSnap.exists()) {
-                        // Obtener el campo "school" del documento
+                        // Obtener los campos "school", "schoolName" y "role" del documento
                         const userData = userDocSnap.data();
                         userSchool.value = userData.school;
+                        userSchoolName.value = userData.schoolName;
+                        userRole.value = userData.role;
                         console.log('School:', userSchool.value);
+                        console.log('School Name:', userSchoolName.value);
+                        console.log('Role:', userRole.value);
                     } else {
                         console.log('No such document!');
                     }
@@ -39,9 +45,11 @@ export function useAuth() {
                 console.log('No authenticated user');
                 currentUser.value = null;
                 userSchool.value = null;
+                userSchoolName.value = null;
+                userRole.value = null;
             }
         });
     });
 
-    return { currentUser, userSchool };
+    return { currentUser, userSchool, userSchoolName, userRole };
 }

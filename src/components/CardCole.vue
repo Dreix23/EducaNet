@@ -1,6 +1,6 @@
-<!-- src/components/SchoolCard.vue -->
+<!-- src/components/CardCole.vue -->
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { MoreVertical, School, Edit, Trash2 } from 'lucide-vue-next';
 import SchoolDialog from '@/dialogs/SchoolDialog.vue';
 
@@ -30,6 +30,14 @@ function openDialog() {
     dialogRef.value.openDialog(props.school);
   }
 }
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
 </script>
 
 <template>

@@ -3,18 +3,50 @@ import BaseInput from '@/components/BaseInput.vue';
 import BaseButton from '../components/BaseButton.vue';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-vue-next';
 import { ref, onMounted } from 'vue';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/services/firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth, db } from '@/services/firebase';
 import { useRouter } from 'vue-router';
 import { logInfo, logError, logDebug, enableLogs } from '@/utils/logger.js';
+import { collection, query, where, getDocs, doc, setDoc } from "firebase/firestore";
 import logoSrc from '@/assets/login/logo.png';
 import grupoAlu from '@/assets/login/grupoAlu.png';
+
+const defaultEmail = "admin@educanet.com";
+const defaultPassword = "123456";
 
 const showPassword = ref(false);
 const isMobile = ref(false);
 const email = ref('');
 const password = ref('');
 const router = useRouter();
+
+async function createDefaultUser() {
+  const usersRef = collection(db, "users");
+  const q = query(usersRef, where("email", "==", defaultEmail));
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) {
+    try {
+      // Create the user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, defaultEmail, defaultPassword);
+      const uid = userCredential.user.uid;
+      console.log("User created in Firebase Auth with UID:", uid);
+
+      // Create the user document in Firestore using the UID
+      const defaultUser = {
+        email: defaultEmail,
+        name: "Dreix",
+        role: "admin"
+      };
+      await setDoc(doc(db, "users", uid), defaultUser);
+      console.log("User document created in Firestore with UID:", uid);
+    } catch (error) {
+      console.error("Error creating default user:", error);
+    }
+  } else {
+    console.log("Default user already exists");
+  }
+}
 
 function toggleShowPassword() {
   showPassword.value = !showPassword.value;
@@ -27,42 +59,44 @@ function checkScreenWidth() {
 onMounted(() => {
   checkScreenWidth();
   window.addEventListener('resize', checkScreenWidth);
+  createDefaultUser();
 });
 
 function onEmailInput(event) {
   email.value = event.target.value;
-  logDebug(`Correo electrónico ingresado: ${email.value}`);
+  logDebug(`Email entered: ${email.value}`);
 }
 
 function onPasswordInput(event) {
   password.value = event.target.value;
-  logDebug(`Contraseña ingresada: ${password.value}`);
+  logDebug(`Password entered: ${password.value}`);
 }
 
 const login = async () => {
-  logInfo('Iniciando proceso de login...');
-  logDebug(`Correo electrónico ingresado: ${email.value}`);
-  logDebug(`Contraseña ingresada: ${password.value}`);
+  logInfo('Starting login process...');
+  logDebug(`Email entered: ${email.value}`);
+  logDebug(`Password entered: ${password.value}`);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email.value)) {
-    logError('El formato del correo electrónico no es válido.');
+    logError('Invalid email format.');
     return;
   }
 
   try {
-    logInfo('Conectando con Firebase...');
+    logInfo('Connecting to Firebase...');
     await signInWithEmailAndPassword(auth, email.value, password.value);
-    logInfo('Conexión exitosa con Firebase.');
-    logInfo('Login exitoso. Redirigiendo a la página de inicio...');
+    logInfo('Successfully connected to Firebase.');
+    logInfo('Login successful. Redirecting to home page...');
     router.push('/home');
   } catch (error) {
-    console.error('Error de login:', error);
-    logError(`Error de login: ${error.message}`);
-    logDebug(`Código de error: ${error.code}`);
+    console.error('Login error:', error);
+    logError(`Login error: ${error.message}`);
+    logDebug(`Error code: ${error.code}`);
   }
 };
 </script>
+
 
 <template>
   <div class="container-login">
