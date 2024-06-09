@@ -31,7 +31,7 @@ const routes = [
     children: [
       {
         path: "",
-        redirect: "/inicio",
+        redirect: { name: "inicio" },
       },
       {
         name: "inicio",
@@ -76,7 +76,7 @@ const routes = [
     children: [
       {
         path: "",
-        redirect: "/ProfeIncio",
+        redirect: { name: "ProfeIncio" },
       },
       {
         name: "ProfeIncio",
@@ -84,27 +84,24 @@ const routes = [
         component: ProfeIncio,
       },
       {
-        path: "/section",
+        name: "section",
+        path: "/section/:grupo",
         component: ProfeSection,
+        props: true,
         children: [
           {
-            name: "section",
-            path: "",
-            redirect: "/tarea",
-          },
-          {
-            name: "tarea",
-            path: "/tarea",
+            name: "section.tarea",
+            path: "tarea",
             component: Tarea,
           },
           {
-            name: "avisos",
-            path: "/avisos",
+            name: "section.avisos",
+            path: "avisos",
             component: Avisos,
           },
           {
-            name: "asistencia",
-            path: "/asistencia",
+            name: "section.asistencia",
+            path: "asistencia",
             component: Asistencia,
           },
         ],
@@ -134,35 +131,36 @@ index.beforeEach(async (to, from, next) => {
   });
 
   logInfo(`Navegando de ${from.path} a ${to.path}`);
-  logDebug("¿Requiere autenticacin?", requiresAuth);
+  logDebug("¿Requiere autenticación?", requiresAuth);
   logDebug("¿Usuario autenticado?", user);
 
-  if (requiresAuth && !user) {
+  if (to.path === "/login" && user) {
+    logInfo("Usuario autenticado. Redirigiendo a la ruta inicial...");
+    if (user.role === "profesor") {
+      next("/profescreen");
+    } else {
+      next("/home");
+    }
+  } else if (requiresAuth && !user) {
     logInfo("Acceso no autorizado. Redirigiendo al login...");
     next("/login");
   } else if (requiresAuth && user) {
     const userDoc = await getDoc(doc(db, "users", user.uid));
     const userData = userDoc.data();
     const userRole = userData.role;
+    const allowedRoles = to.meta.allowedRoles;
 
-    if (to.matched.length === 0) {
-      // Ruta no encontrada, redirigir segn el rol
-      if (userRole === "profesor") {
-        next({ name: "ProfeIncio" });
-      } else {
-        next({ name: "inicio" });
-      }
-    } else if (userRole === "profesor" && to.path !== "/ProfeIncio") {
-      logInfo("Redirigiendo al profesor a ProfeIncio...");
-      next("/ProfeIncio");
-    } else if (userRole === "admin" && to.path !== "/inicio") {
-      logInfo("Acceso denegado. Ruta no autorizada para el rol de administrador.");
-      next("/inicio");
-    } else if (Array.isArray(allowedRoles) && !allowedRoles.includes(userRole)) {
+    if (allowedRoles && !allowedRoles.includes(userRole)) {
       logInfo("Acceso denegado. Rol no autorizado.");
-      next("/login");
+      if (userRole === "profesor") {
+        next("/profescreen");
+      } else if (userRole === "admin" || userRole === "director") {
+        next("/home");
+      } else {
+        next("/login");
+      }
     } else {
-      logInfo("Acceso autorizado. Continuando navegacin...");
+      logInfo("Acceso autorizado. Continuando navegación...");
       next();
     }
   } else {

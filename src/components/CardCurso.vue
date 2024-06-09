@@ -1,11 +1,12 @@
 <script setup>
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { ref, onMounted, watch } from 'vue';
 import { getDocs, collection, doc, getDoc, updateDoc, arrayUnion, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
 import { useAuth } from '@/services/userService.js';
 
 const route = useRoute();
+const router = useRouter();
 const routeName = ref('');
 
 const updateRouteName = () => {
@@ -20,7 +21,7 @@ watch(route, () => {
   updateRouteName();
 });
 
-const { userSchool } = useAuth();
+const { userSchool, userRole } = useAuth();
 
 const props = defineProps({
   curso: {
@@ -211,10 +212,14 @@ watch(selectedGrupos, saveDataToFirebase, { deep: true });
           <div class="container-secciones w-full flex gap-[9px] flex-wrap">
 
             <template v-for="grupo in Object.keys(selectedGrupos)" :key="grupo">
-              <router-link to="/section" v-if="selectedGrupos[grupo]"
+              <router-link v-if="userRole === 'profesor' && selectedGrupos[grupo]" :to="{ name: 'section', params: { grupo: grupo } }"
                            class="section-circle py-[8px] px-[18px] w-[40px] h-[40px] bg-purple-500 flex justify-center items-center">
                 <span class="text-white text-size-20 font-bold">{{ grupo }}</span>
               </router-link>
+              <div v-else-if="selectedGrupos[grupo]"
+                   class="section-circle py-[8px] px-[18px] w-[40px] h-[40px] bg-gray-400 flex justify-center items-center cursor-not-allowed">
+                <span class="text-white text-size-20 font-bold">{{ grupo }}</span>
+              </div>
             </template>
           </div>
         </div>
