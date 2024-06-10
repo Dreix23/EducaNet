@@ -44,8 +44,22 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="userRole === 'director'">
-    <h1 class="text-2xl font-semibold text-gray-800">Bienvenido al colegio {{ userSchoolName }}</h1>
+  <div v-if="userRole === 'director'" class="flex flex-col gap-[25px] items-center">
+    <h1 class="text-2xl font-semibold text-gray-800 uppercase text-center">Bienvenido al colegio {{ userSchoolName }}
+    </h1>
+    <div class="flex flex-col items-center text-size-16 w-auto text-justify gap-[25px] justify-center sm:flex-row-reverse xl:w-[800px]">
+      <img class="w-[200px]"
+        src="https://4.bp.blogspot.com/-oyzJQ9glbYI/V0Y4f08QC5I/AAAAAAAAxdc/4ILEsz1KLo8LVLKLvCd9yVJMepuGfSTPQCLcB/s640/ie-00884-los-olivos-insignia.jpg"
+        alt="">
+      <div class="parrafos">
+        <p>La Institución educativa Colegio Los Olivos se halla en el lugar de Los Olivos, provincia de Nueva Cajamarca,
+          tal I.E. compete a la UGEL RIOJA que controla el servicio educativo, y esta última corresponde a la Dirección
+          regional de educación DRE SAN MARTIN.</p>
+        <p>La institución Colegio Los Olivos quiere hallar y amplificar personas capaces con una alta autoestima,
+          conciencia, destrezas sociales y una sólida formación académica, moral y emocional para que puedan obtener el
+          éxito personal y profesional dentro de una sociedad coetáneo y cambiante.</p>
+      </div>
+    </div>
   </div>
   <div v-else-if="userRole === 'admin'">
     <div class="flex justify-between items-center">
@@ -61,5 +75,4 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>
