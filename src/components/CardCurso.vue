@@ -1,4 +1,5 @@
 <script setup>
+import { defineProps } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ref, onMounted, watch } from 'vue';
 import { getDocs, collection, doc, getDoc, updateDoc, arrayUnion, onSnapshot } from 'firebase/firestore';
@@ -212,7 +213,7 @@ watch(selectedGrupos, saveDataToFirebase, { deep: true });
           <div class="container-secciones w-full flex gap-[9px] flex-wrap">
 
             <template v-for="grupo in Object.keys(selectedGrupos)" :key="grupo">
-              <router-link v-if="userRole === 'profesor' && selectedGrupos[grupo]" :to="{ name: 'section', params: { grupo: grupo } }"
+              <router-link v-if="userRole === 'profesor' && selectedGrupos[grupo]" :to="{ name: 'section', params: { grupo: grupo, curso: curso.curso } }"
                            class="section-circle py-[8px] px-[18px] w-[40px] h-[40px] bg-purple-500 flex justify-center items-center">
                 <span class="text-white text-size-20 font-bold">{{ grupo }}</span>
               </router-link>

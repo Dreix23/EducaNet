@@ -1,5 +1,6 @@
 <!-- src/components/CardCole.vue -->
 <script setup>
+import { defineProps } from 'vue';
 import { ref, onMounted, onUnmounted } from 'vue';
 import { MoreVertical, School, Edit, Trash2 } from 'lucide-vue-next';
 import SchoolDialog from '@/dialogs/SchoolDialog.vue';

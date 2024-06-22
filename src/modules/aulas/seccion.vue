@@ -7,9 +7,9 @@ import DashInput from '@/components/DashInput.vue';
 import { ref, onMounted, watch } from 'vue';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
-import { useAuth } from '@/services/userService.js'; // Importar useAuth
+import { useAuth } from '@/services/userService.js';
 
-const { currentUser, userSchool } = useAuth(); // Obtener currentUser y userSchool desde useAuth
+const { userSchool } = useAuth(); // Obtener currentUser y userSchool desde useAuth
 
 // Definir las columnas de la tabla
 const columns = ['#', 'Nombre', 'Código QR', 'Turno', 'Acciones'];

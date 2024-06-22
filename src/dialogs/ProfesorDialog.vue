@@ -1,4 +1,5 @@
 <script setup>
+import { defineProps, defineEmits } from 'vue';
 import { ref, watch, computed } from 'vue';
 import { Eye, EyeOff } from 'lucide-vue-next';
 
@@ -26,13 +27,15 @@ const tempNombre = ref('');
 const tempCorreo = ref('');
 const password = ref('');
 const loading = ref(false);
+const turno = ref('MATUTINO');
 
 watch(() => props.profesorSeleccionado, (newProfesor) => {
-  tempCod.value = newProfesor.cod || '';
-  tempNombre.value = newProfesor.nombre || '';
-  tempCorreo.value = newProfesor.correo || '';
-  password.value = '';  // Siempre vacío para ocultar
-});
+  tempCod.value = newProfesor.code || '';
+  tempNombre.value = newProfesor.name || '';
+  tempCorreo.value = newProfesor.email || '';
+  password.value = newProfesor.password || '';
+  turno.value = newProfesor.turno || 'MATUTINO';
+}, { immediate: true });
 
 const toggleShowPassword = () => {
   showPassword.value = !showPassword.value;
@@ -50,7 +53,8 @@ const guardarProfesor = () => {
       cod: tempCod.value,
       nombre: tempNombre.value,
       correo: tempCorreo.value,
-      password: password.value
+      password: password.value,
+      turno: turno.value
     };
     emit('guardarProfesor', profesorGuardado);
     loading.value = false;
@@ -58,14 +62,14 @@ const guardarProfesor = () => {
   }, 1000);
 };
 
-// Propiedades computadas para el título del diálogo y el estilo del botón
 const dialogTitle = computed(() => props.isEditing ? 'Editar Profesor' : 'Agregar Profesor');
 const buttonStyle = computed(() => props.isEditing ? 'bg-blue-500 hover:bg-blue-600 transition-colors duration-300 ease-in-out' : 'bg-blue-500 hover:bg-blue-600 transition-colors duration-300 ease-in-out');
 const buttonText = computed(() => props.isEditing ? 'Guardar Cambios' : 'Agregar Profesor');
 </script>
+
 <template>
   <transition name="fade" appear>
-    <div v-if="modalActive" class="fixed inset-0 flex items-center justify-center z-50 ">
+    <div v-if="modalActive" class="fixed inset-0 flex items-center justify-center z-50">
       <div class="fixed inset-0 bg-black opacity-50" @click="closeModal"></div>
       <div class="bg-white rounded-[20px] shadow-lg w-11/12 md:w-1/2 lg:w-1/3 z-10 p-[16px]">
         <div class="flex justify-between items-center p-[8px] border-b">
@@ -108,6 +112,19 @@ const buttonText = computed(() => props.isEditing ? 'Guardar Cambios' : 'Agregar
                   </button>
                 </div>
               </div>
+              <div class="grid grid-cols-3 gap-4 items-center">
+                <label class="text-sm text-gray-900">Turno</label>
+                <div class="col-span-2 flex space-x-4">
+                  <label class="flex items-center">
+                    <input type="radio" v-model="turno" value="MATUTINO" class="form-radio text-blue-500 h-4 w-4">
+                    <span class="ml-2">Matutino</span>
+                  </label>
+                  <label class="flex items-center">
+                    <input type="radio" v-model="turno" value="VESPERTINO" class="form-radio text-blue-500 h-4 w-4">
+                    <span class="ml-2">Vespertino</span>
+                  </label>
+                </div>
+              </div>
             </div>
             <div class="flex justify-center mt-6">
               <button type="submit" :class="[buttonStyle, 'text-white px-6 py-2 rounded-lg transition duration-200']"
@@ -117,8 +134,7 @@ const buttonText = computed(() => props.isEditing ? 'Guardar Cambios' : 'Agregar
                   <svg class="animate-spin h-5 w-5 mr-3 inline-block" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                    </path>
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   Guardando...
                 </span>
@@ -130,5 +146,6 @@ const buttonText = computed(() => props.isEditing ? 'Guardar Cambios' : 'Agregar
     </div>
   </transition>
 </template>
+
 <style scoped>
 </style>

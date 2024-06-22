@@ -59,7 +59,8 @@ const guardarProfesor = async (profesor) => {
       name: profesor.nombre,
       email: profesor.correo,
       password: profesor.password,
-      school: userSchool.value, // Agregar el nombre del colegio
+      turno: profesor.turno,
+      school: userSchool.value,
       role: 'profesor' // Agregar el rol del usuario
     });
 
@@ -107,6 +108,8 @@ const columns = ref([
   { name: 'CODE', align: 'left' },
   { name: 'NAME', align: 'left' },
   { name: 'EMAIL', align: 'left' },
+  { name: 'CONTRASEÑA', align: 'left' },
+  { name: 'TURNO', align: 'left' },
   { name: 'ACTIONS', align: 'center' }
 ]);
 
@@ -148,6 +151,7 @@ watch(profesores, (newProfesores) => {
 
 updateTableData();
 </script>
+
 <template>
   <div class="flex gap-4">
     <BtnExcelProf iconType="FileUp" buttonText="Cargar Excel"
@@ -160,9 +164,10 @@ updateTableData();
   <ProfesorDialog :modalActive="modalActive" :profesorSeleccionado="profesorSeleccionado" :isEditing="isEditing"
                   @closeModal="toggleModal" @guardarProfesor="guardarProfesor" />
   <div class="mt-6 bg-white rounded-lg shadow-md p-6">
-    <ProfTable :columns="columns" :data="pagination.data" :pagination="pagination" />
+    <ProfTable :columns="columns" :data="pagination.data" :pagination="pagination" :guardarProfesor="guardarProfesor" />
   </div>
 </template>
+
 <style scoped>
-/* */
+/* Add your styles here */
 </style>

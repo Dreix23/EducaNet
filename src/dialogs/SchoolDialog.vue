@@ -1,5 +1,6 @@
 <!-- src/dialogs/SchoolDialog.vue -->
 <script setup>
+import { defineExpose } from 'vue';
 import { ref, computed } from 'vue';
 import { auth, db } from '@/services/firebase';
 import { createUserWithEmailAndPassword, updateCurrentUser } from 'firebase/auth';

@@ -1,139 +1,103 @@
 <script setup>
-import { ref } from 'vue';
+import { defineProps, ref } from 'vue';
 import UpdateAvisoDialog from '@/dialogs/UpdateAvisoDialog.vue';
-import { FilePenLine, Trash2, ChevronRight, ChevronLeft } from 'lucide-vue-next'
+import Alert from '@/components/Alert.vue';
+import { FilePenLine, Trash2, ChevronRight, ChevronLeft } from 'lucide-vue-next';
 
-const dialogRef = ref(null);
-const dialogRef2 = ref(null);
+const props = defineProps({
+  avisos: Array,
+  isLoading: Boolean,
+  curso: String,
+  grupo: String
+});
 
-const openDialog = () => {
-    if (dialogRef.value) {
-        dialogRef.value.openDialog();
-    }
+const emit = defineEmits(['deleteAviso']);
+
+const updateDialogRef = ref(null);
+const showDeleteAlert = ref(false);
+const avisoToDelete = ref(null);
+
+const openUpdateDialog = (aviso) => {
+  if (updateDialogRef.value) {
+    console.log('Abriendo diálogo de actualización para el aviso:', aviso);
+    updateDialogRef.value.openDialog(aviso);
+  }
 };
-const openDialog2 = () => {
-    if (dialogRef2.value) {
-        dialogRef2.value.openDialog();
-    }
+
+const confirmDelete = (avisoId) => {
+  avisoToDelete.value = avisoId;
+  showDeleteAlert.value = true;
 };
 
+const handleDeleteConfirm = () => {
+  emit('deleteAviso', avisoToDelete.value);
+  showDeleteAlert.value = false;
+  avisoToDelete.value = null;
+};
+
+const handleDeleteCancel = () => {
+  showDeleteAlert.value = false;
+  avisoToDelete.value = null;
+};
 </script>
 
 <template>
+  <div class="mt-6">
+    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+      <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+      <tr>
+        <th scope="col" class="px-6 py-3">Titulo</th>
+        <th scope="col" class="px-6 py-3">Descripción</th>
+        <th scope="col" class="px-6 py-3 text-center">Fecha de Publicación</th>
+        <th scope="col" class="px-6 py-3 text-center">Acciones</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr v-if="isLoading">
+        <td colspan="4" class="px-6 py-4 text-center">Cargando avisos...</td>
+      </tr>
+      <tr v-if="!isLoading && avisos.length === 0">
+        <td colspan="4" class="px-6 py-4 text-center">No hay avisos disponibles</td>
+      </tr>
+      <tr v-for="aviso in avisos" :key="aviso.id"
+          class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+        <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+          {{ aviso.titulo }}
+        </th>
+        <td class="px-6 py-4">{{ aviso.descripcion }}</td>
+        <td class="px-6 py-4 text-center">{{ aviso.fechaPublicacion }}</td>
+        <td class="px-6 py-4 flex gap-4 justify-center">
+          <button class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+                  @click="openUpdateDialog(aviso)">
+            <FilePenLine class="icon"/>
+          </button>
+          <button class="font-medium text-red-600 dark:text-red-500 hover:underline"
+                  @click="confirmDelete(aviso.id)">
+            <Trash2 class="icon"/>
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
 
-    <div class="relative overflow-x-auto  sm:rounded-lg mt-[25px]">
-        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr class="text-center">
-                    <th scope="col" class="px-6 py-3">
-                        Titulo
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Descripción
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Fecha
-                    </th>
-                    <th scope="col" class="px-6 py-3">
-                        Aciones
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr
-                    class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        Solo
-                    </th>
-                    <td class="px-6 py-4">
-                        Es una tarea
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                        10-10-2024
-                    </td>
-                    <td class="px-6 py-4 flex gap-[15px] justify-center">
-                        <button class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-                            @click="openDialog">
-                            <FilePenLine class="icon" />
-                        </button>
-                        <button class="font-medium text-blue-600 dark:text-blue-500 hover:underline">
-                            <Trash2 class="icon text-color-alert" />
-                        </button>
-                    </td>
-                </tr>
-                <tr
-                    class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        Solo
-                    </th>
-                    <td class="px-6 py-4">
-                        Es una tarea
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                        10-10-2024
-                    </td>
-                    <td class="px-6 py-4 flex gap-[15px] justify-center">
-                        <button class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-                            @click="openDialog">
-                            <FilePenLine class="icon" />
-                        </button>
-                        <button class="font-medium text-blue-600 dark:text-blue-500 hover:underline">
-                            <Trash2 class="icon text-color-alert" />
-                        </button>
+  <UpdateAvisoDialog ref="updateDialogRef" :curso="props.curso" :grupo="props.grupo"/>
 
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <nav class="flex items-center flex-column flex-wrap md:flex-row justify-between pt-4"
-            aria-label="Table navigation">
-            <span
-                class="text-sm font-normal text-gray-500 dark:text-gray-400 mb-4 md:mb-0 block w-full md:inline md:w-auto">Mostrando
-                datos
-                <span class="font-semibold text-gray-900 dark:text-white">1-10</span> de <span
-                    class="font-semibold text-gray-900 dark:text-white">1000</span></span>
-            <ul class="inline-flex -space-x-px rtl:space-x-reverse text-sm h-8">
-                <li>
-                    <a href="#"
-                        class="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
-                        <ChevronLeft />
-                    </a>
-                </li>
-                <li>
-                    <a href="#"
-                        class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">1</a>
-                </li>
-                <li>
-                    <a href="#"
-                        class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
-                        <ChevronRight />
-                    </a>
-                </li>
-            </ul>
-        </nav>
-    </div>
-
-    <UpdateAvisoDialog ref="dialogRef" />
-
+  <Alert
+      v-if="showDeleteAlert"
+      Type="alert"
+      TitleAlert="Confirmar eliminación"
+      InfoAlert="¿Estás seguro de que deseas eliminar este aviso?"
+      ButonText="Eliminar"
+      @confirm="handleDeleteConfirm"
+      @cancel="handleDeleteCancel"
+      @close="handleDeleteCancel"
+  />
 </template>
 
 <style scoped>
 .icon {
-    transition: .3s transform ease-in-out;
-}
-
-.icon:hover {
-    transform: scale(1.2);
-
-}
-
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity .5s;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 </style>

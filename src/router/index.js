@@ -83,29 +83,36 @@ const routes = [
         path: "/ProfeIncio",
         component: ProfeIncio,
       },
-      { 
-        name: "section",
-        path: "/section/:grupo",
+      {
+        path: "/section/:grupo/:curso",
         component: ProfeSection,
         props: true,
         children: [
           {
+            name: "section",
+            path: "",
+            redirect: { name: "section.tarea" }
+          },
+          {
             name: "section.tarea",
             path: "tarea",
             component: Tarea,
+            props: true
           },
           {
             name: "section.avisos",
             path: "avisos",
             component: Avisos,
+            props: true
           },
           {
             name: "section.asistencia",
             path: "asistencia",
             component: Asistencia,
-          },
-        ],
-      },
+            props: true
+          }
+        ]
+      }
     ],
   },
   {
@@ -159,10 +166,11 @@ index.beforeEach(async (to, from, next) => {
         next("/login");
       }
     } else {
-      logInfo("Acceso autorizado. Continuando navegación...");
+      logInfo("Acceso autorizado.");
       next();
     }
   } else {
+    logInfo("Acceso permitido. Navegando...");
     next();
   }
 });
