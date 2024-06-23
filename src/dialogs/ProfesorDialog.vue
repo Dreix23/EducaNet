@@ -2,8 +2,14 @@
 import { defineProps, defineEmits } from 'vue';
 import { ref, watch, computed } from 'vue';
 import { Eye, EyeOff } from 'lucide-vue-next';
+import { doc, setDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/services/firebase.js';
+import { getAuth, createUserWithEmailAndPassword, updateCurrentUser } from 'firebase/auth';
+import { useAuth } from '@/services/userService.js';
 
-const emit = defineEmits(['closeModal', 'guardarProfesor']);
+const { userSchool } = useAuth();
+
+const emit = defineEmits(['closeModal', 'profesorActualizado']);
 
 const props = defineProps({
   modalActive: {
@@ -45,25 +51,50 @@ const closeModal = () => {
   emit('closeModal');
 };
 
-const guardarProfesor = () => {
-  loading.value = true;
+const guardarProfesor = async () => {
+  if (!userSchool.value) return;
 
-  setTimeout(() => {
-    const profesorGuardado = {
-      cod: tempCod.value,
-      nombre: tempNombre.value,
-      correo: tempCorreo.value,
-      password: password.value,
-      turno: turno.value
-    };
-    emit('guardarProfesor', profesorGuardado);
-    loading.value = false;
+  loading.value = true;
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
+
+  try {
+    if (props.isEditing) {
+      const profesorRef = doc(db, 'users', props.profesorSeleccionado.id);
+      await updateDoc(profesorRef, {
+        code: tempCod.value,
+        name: tempNombre.value,
+        turno: turno.value
+      });
+      emit('profesorActualizado');
+    } else {
+      const userCredential = await createUserWithEmailAndPassword(auth, tempCorreo.value, password.value);
+      const newUser = userCredential.user;
+
+      await setDoc(doc(db, 'users', newUser.uid), {
+        code: tempCod.value,
+        name: tempNombre.value,
+        email: tempCorreo.value,
+        password: password.value,
+        turno: turno.value,
+        school: userSchool.value,
+        role: 'profesor'
+      });
+
+      await updateCurrentUser(auth, currentUser);
+      emit('profesorActualizado');
+    }
+    loading.value = false;  // Asegúrate de configurar loading a false antes de cerrar el modal
     closeModal();
-  }, 1000);
+  } catch (error) {
+    console.error('Error al guardar/editar profesor:', error);
+  } finally {
+    loading.value = false;
+  }
 };
 
 const dialogTitle = computed(() => props.isEditing ? 'Editar Profesor' : 'Agregar Profesor');
-const buttonStyle = computed(() => props.isEditing ? 'bg-blue-500 hover:bg-blue-600 transition-colors duration-300 ease-in-out' : 'bg-blue-500 hover:bg-blue-600 transition-colors duration-300 ease-in-out');
+const buttonStyle = computed(() => 'bg-blue-500 hover:bg-blue-600 transition-colors duration-300 ease-in-out');
 const buttonText = computed(() => props.isEditing ? 'Guardar Cambios' : 'Agregar Profesor');
 </script>
 
@@ -74,7 +105,7 @@ const buttonText = computed(() => props.isEditing ? 'Guardar Cambios' : 'Agregar
       <div class="bg-white rounded-[20px] shadow-lg w-11/12 md:w-1/2 lg:w-1/3 z-10 p-[16px]">
         <div class="flex justify-between items-center p-[8px] border-b">
           <h2 class="text-lg font-semibold text-gray-900">{{ dialogTitle }}</h2>
-          <button @click="closeModal" class="text-gray-500 hover:text-gray-700">
+          <button @click="closeModal" class="text-gray-500 hover:text-gray-700" :disabled="loading">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -98,7 +129,8 @@ const buttonText = computed(() => props.isEditing ? 'Guardar Cambios' : 'Agregar
                 <label for="correo" class="text-sm text-gray-900">Correo</label>
                 <input v-model="tempCorreo" type="email" id="correo" placeholder="Correo"
                        class="col-span-2 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                       :readonly="props.isEditing">
+                       :readonly="props.isEditing"
+                       :class="{ 'bg-gray-100': props.isEditing }">
               </div>
               <div class="grid grid-cols-3 gap-4 items-center" v-if="!props.isEditing">
                 <label for="password" class="text-sm text-gray-900">Contraseña</label>
@@ -148,4 +180,5 @@ const buttonText = computed(() => props.isEditing ? 'Guardar Cambios' : 'Agregar
 </template>
 
 <style scoped>
+/* Add your styles here */
 </style>

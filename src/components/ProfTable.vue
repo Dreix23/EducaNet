@@ -16,10 +16,6 @@ const props = defineProps({
   pagination: {
     type: Object,
     required: true
-  },
-  guardarProfesor: {
-    type: Function,
-    required: true
   }
 });
 
@@ -46,7 +42,7 @@ const isEditing = ref(false);
 
 // Función para abrir el modal de edición o adición
 const toggleModal = (profesor = {}) => {
-  profesorSeleccionado.value = { ...profesor };
+  profesorSeleccionado.value = {...profesor};
   isEditing.value = Object.keys(profesor).length > 0;
   editarModalActive.value = true;
 };
@@ -132,7 +128,7 @@ const handleProfessorClick = (id) => {
       </ul>
     </nav>
     <ProfesorDialog :modalActive="editarModalActive" :profesorSeleccionado="profesorSeleccionado" :isEditing="isEditing"
-                    @closeModal="editarModalActive = false" @guardarProfesor="guardarProfesor"/>
+                    @closeModal="editarModalActive = false"/>
   </div>
 </template>
 
