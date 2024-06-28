@@ -15,8 +15,8 @@ defineProps({
     width: 100%;
     border-radius: 10px;
     border: 1px solid #DFEAF2;
-    height: 46.551px;
-    font-size: 16px;
+    height: 60px !important;
+    font-size: 16px !important;
     font-style: normal;
     font-weight: 400;
     line-height: normal;

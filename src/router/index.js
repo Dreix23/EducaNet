@@ -16,6 +16,8 @@ import ProfeSection from "@/modules/profesor/profSection.vue";
 import Tarea from "@/modules/profesor/tarea.vue";
 import Asistencia from "@/modules/profesor/asistencias.vue";
 import Avisos from "@/modules/profesor/avisos.vue";
+import AvisosDirector from "@/modules/avisos.vue";
+import AsistenciasDirector from "@/modules/asistencias.vue";
 
 import { logInfo, logError, logDebug, enableLogs } from "@/utils/logger.js";
 
@@ -66,6 +68,16 @@ const routes = [
         name: "perfil",
         path: "/perfil",
         component: perfilModul,
+      },
+      {
+        name: "avisos",
+        path: "/avisos",
+        component: AvisosDirector,
+      },
+      {
+        name: "asistencias",
+        path: "/asistencias",
+        component: AsistenciasDirector,
       },
     ],
   },

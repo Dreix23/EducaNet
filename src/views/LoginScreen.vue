@@ -116,7 +116,9 @@ const login = async () => {
     </div>
     <div class="container-info-login">
       <div class="container-singIng" v-if="!isMobile">
-        <p>No eres miembro todavía?</p><a href="#">Únete ahora</a>
+        <p class="mienbros">No eres miembro todavía?</p><a
+          href="mailto:educanetconsultas@gmail.com?subject=Información&body=Necesito información sobre: ">Únete
+          ahora</a>
       </div>
       <div class="container-form">
         <div class="form-title">
@@ -140,13 +142,14 @@ const login = async () => {
           <BaseButton type="submit" iconType="LogIn" buttonText="Iniciar Sesión"
             class="text-size-16 flex flex-row-reverse justify-between py-[22px] font-bold" />
         </form>
-        <a href="#">Tienes problemas con su contraseña?</a>
+        <!-- <a href="#">Tienes problemas con su contraseña?</a> -->
       </div>
       <div class="container-derechos" v-if="!isMobile">
-        <p>Copyright 2024 EducaNet. Todos los derechos reservados</p>
+        <p class="derecho">Copyright 2024 EducaNet. Todos los derechos reservados</p>
         <div class="ineed">
           <i class="fa-solid fa-info"></i>
-          <a href="#">Necesitas ayuda?</a>
+          <a href="mailto:educanetconsultas@gmail.com?subject=Necesito Ayuda&body=Hola, tengo una consulta sobre: " class="derecho">Necesitas
+            ayuda?</a>
         </div>
       </div>
     </div>
@@ -154,6 +157,12 @@ const login = async () => {
 </template>
 
 <style scoped>
+.mienbros{
+  font-size: 15px !important;
+}
+.derecho{
+  font-size: 15px !important;
+}
 .container-login {
   background: #F9F9FA;
   width: 100vw;

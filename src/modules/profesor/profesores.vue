@@ -112,8 +112,8 @@ const handleProfesorActualizado = () => {
 
 <template>
   <div class="flex gap-4">
-    <BtnExcelProf iconType="FileUp" buttonText="Cargar Excel"
-                  class="bg-white hover:bg-green-500 text-black hover:text-white rounded-lg shadow-md"/>
+    <!-- <BtnExcelProf iconType="FileUp" buttonText="Cargar Excel"
+                  class="bg-white hover:bg-green-500 text-black hover:text-white rounded-lg shadow-md"/> -->
     <button @click="toggleModal()"
             class="py-3 px-5 flex justify-center items-center gap-2 text-lg font-semibold bg-white hover:bg-green-500 text-black hover:text-white rounded-lg shadow-md transition-colors duration-300 ease-in-out">
       <CirclePlus/>

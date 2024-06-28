@@ -45,19 +45,26 @@ onUnmounted(() => {
 
 <template>
   <div v-if="userRole === 'director'" class="flex flex-col gap-[25px] items-center">
-    <h1 class="text-2xl font-semibold text-gray-800 uppercase text-center">Bienvenido al colegio {{ userSchoolName }}
-    </h1>
-    <div class="flex flex-col items-center text-size-16 w-auto text-justify gap-[25px] justify-center sm:flex-row-reverse xl:w-[800px]">
-      <img class="w-[200px]"
-        src="https://4.bp.blogspot.com/-oyzJQ9glbYI/V0Y4f08QC5I/AAAAAAAAxdc/4ILEsz1KLo8LVLKLvCd9yVJMepuGfSTPQCLcB/s640/ie-00884-los-olivos-insignia.jpg"
-        alt="">
-      <div class="parrafos">
-        <p>La Institución educativa Colegio Los Olivos se halla en el lugar de Los Olivos, provincia de Nueva Cajamarca,
-          tal I.E. compete a la UGEL RIOJA que controla el servicio educativo, y esta última corresponde a la Dirección
-          regional de educación DRE SAN MARTIN.</p>
-        <p>La institución Colegio Los Olivos quiere hallar y amplificar personas capaces con una alta autoestima,
-          conciencia, destrezas sociales y una sólida formación académica, moral y emocional para que puedan obtener el
-          éxito personal y profesional dentro de una sociedad coetáneo y cambiante.</p>
+    <div class="card-cole">
+      <div class="container-img">
+        <img
+          src="https://4.bp.blogspot.com/-oyzJQ9glbYI/V0Y4f08QC5I/AAAAAAAAxdc/4ILEsz1KLo8LVLKLvCd9yVJMepuGfSTPQCLcB/s640/ie-00884-los-olivos-insignia.jpg"
+          alt="Escudo los olivos">
+      </div>
+      <div class="container-info">
+        <h1 class="text-2xl font-semibold text-gray-800 uppercase text-center">Bienvenido al colegio {{ userSchoolName
+          }}</h1>
+        <div class="parrafos">
+          <p>La Institución educativa Colegio Los Olivos se halla en el lugar de Los Olivos, provincia de Nueva
+            Cajamarca,
+            tal I.E. compete a la UGEL RIOJA que controla el servicio educativo, y esta última corresponde a la
+            Dirección
+            regional de educación DRE SAN MARTIN.</p>
+          <p>La institución Colegio Los Olivos quiere hallar y amplificar personas capaces con una alta autoestima,
+            conciencia, destrezas sociales y una sólida formación académica, moral y emocional para que puedan obtener
+            el
+            éxito personal y profesional dentro de una sociedad coetáneo y cambiante.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -75,4 +82,52 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.card-cole {
+  background: #FFF;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 95px 85px 45px 85px;
+  gap: 19px;
+  margin-top: 70px;
+  border: 5px solid #000;
+  position: relative;
+}
+
+.container-img {
+  width: 150px;
+  height: 150px;
+  border-radius: 100%;
+  border: 5px solid #000;
+  mask-image: url(https://4.bp.blogspot.com/-oyzJQ9glbYI/V0Y4f08QC5I/AAAAAAAAxdc/4ILEsz1KLo8LVLKLvCd9yVJMepuGfSTPQCLcB/s640/ie-00884-los-olivos-insignia.jpg);
+  mask-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+  position: absolute;
+  top: -20%;
+}
+
+.container-img img {
+  height: 100px;
+}
+
+.container-info {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 680px;
+  gap: 22px;
+}
+
+@media screen and (max-width: 1000px) {
+  .container-info {
+    width: auto;
+  }
+}
+</style>

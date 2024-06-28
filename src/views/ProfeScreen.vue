@@ -6,7 +6,7 @@ import { auth } from '@/services/firebase';
 import { useAuth } from '@/services/userService'; // Importar useAuth
 import { logInfo, logError, logDebug } from '@/utils/logger.js';
 import logoSrc from '@/assets/Logo-blue.png';
-import profileSrc from '@/assets/profile.png';
+
 import {
   initFlowbite, initAccordions, initCarousels, initCollapses,
   initDials, initDismisses, initDrawers, initDropdowns,

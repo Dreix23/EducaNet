@@ -180,5 +180,13 @@ const buttonText = computed(() => props.isEditing ? 'Guardar Cambios' : 'Agregar
 </template>
 
 <style scoped>
-/* Add your styles here */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

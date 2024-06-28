@@ -4,11 +4,12 @@ import DashButton from '@/components/DashButton.vue';
 import BaseTable from '@/components/BaseTable.vue';
 import BaseModal from '@/components/BaseModal.vue';
 import DashInput from '@/components/DashInput.vue';
+import AddAlumno from '@/dialogs/AddAlumnoDialog.vue';
 import { ref, onMounted, watch } from 'vue';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
 import { useAuth } from '@/services/userService.js';
-
+import { CirclePlus } from 'lucide-vue-next';
 const { userSchool } = useAuth(); // Obtener currentUser y userSchool desde useAuth
 
 // Definir las columnas de la tabla
@@ -16,6 +17,15 @@ const columns = ['#', 'Nombre', 'Código QR', 'Turno', 'Acciones'];
 
 // Datos de los alumnos
 const alumnos = ref([]);
+
+const dialogRef = ref(null);
+
+
+const openDialog = () => {
+  if (dialogRef.value) {
+    dialogRef.value.openDialog();
+  }
+}
 
 // Configuración inicial de paginación
 const pagination = ref({
@@ -118,44 +128,68 @@ onMounted(() => {
   }
 });
 
-const modalActive = ref(null);
-const toggleModal = () => {
-  modalActive.value = !modalActive.value;
-};
+
 </script>
 
 <template>
   <div>
     <div class="container-button-alumnos flex gap-[15px] justify-between items-center">
-      <router-link to="/aulas">
-        <DashButton iconType="CircleChevronLeft" buttonText="" class="bg-color-white hover:bg-color-green"/>
-      </router-link>
-      <span class="text-color-text text-size-32 font-bold">{{ selectedGrade }}{{ selectedSection }}</span>
-      <DashButton icon-type="CirclePlus" button-text="" class="bg-white hover:bg-color-blue" @click="toggleModal" />
+      <div class="flex gap-[20px]">
+        <router-link to="/aulas">
+          <DashButton iconType="CircleChevronLeft" buttonText="" class="bg-color-white hover:bg-color-blue" />
+        </router-link>
+        <!-- SEARCH -->
+        <div class="  dark:bg-gray-900">
+          <label for="table-search" class="sr-only">Search</label>
+          <div class="relative mt-1">
+            <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">
+              <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+              </svg>
+            </div>
+            <input type="text" id="table-search"
+              class="block h-[49.97px] pt-2 ps-10 text-size-16 text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              placeholder="Search for items">
+          </div>
+        </div>
+
+      </div>
+      <span class="text-color-text text-size-32 font-bold title-code">{{ selectedGrade }}{{ selectedSection }}</span>
+      <button @click="openDialog"
+        class="py-[13px] px-[21px] flex justify-center items-center gap-[5px] text-size-16 font-semibold text-color-text bg-white hover:bg-color-blue hover:text-color-white rounded-[12px] dashbutton">
+        <CirclePlus />
+      </button>
     </div>
     <div class="container-table-alumnos">
       <BaseTable :columns="columns" :data="alumnos" :pagination="pagination" />
     </div>
-
-    <BaseModal :modalActive="modalActive" @close-modal="toggleModal" title-card="Agregar Alumno">
-      <form class="p-4 md:p-5">
-        <div class="grid gap-4 mb-4 grid-cols-1">
-          <DashInput type="text" label="Nombre" placeholder="Nombre" />
-          <DashInput type="text" label="Código QR" placeholder="Código QR" />
-          <DashInput type="text" label="Turno" placeholder="Turno" />
-        </div>
-        <BaseButton type="submit" icon-type="" button-text="Agregar Alumno" class="text-size-14" />
-      </form>
-    </BaseModal>
   </div>
+  <AddAlumno ref="dialogRef" />
 </template>
 
 <style scoped>
+.dashbutton {
+  transition: .3s all ease-in-out;
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
 .container-table-alumnos {
   margin-top: 18px;
   border-radius: 14px;
   background: #FFF;
   box-shadow: 6px 6px 54px 0px rgba(0, 0, 0, 0.05);
   padding: 25px 24px;
+}
+
+.title-code {
+  margin-left: -310px;
+}
+
+@media screen and (max-width: 1000px) {
+  .title-code {
+    margin: auto;
+  }
 }
 </style>
