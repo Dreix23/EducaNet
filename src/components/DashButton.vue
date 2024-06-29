@@ -1,6 +1,7 @@
 <script setup>
-import { defineProps, computed, ref } from 'vue';
-import { Sheet, FileUp, CirclePlus, CircleChevronLeft } from 'lucide-vue-next';
+import {defineProps, computed, ref} from 'vue';
+import {Sheet, FileUp, CirclePlus, CircleChevronLeft} from 'lucide-vue-next';
+import {logDebug} from '@/utils/logger.js';
 
 const props = defineProps({
   iconType: {
@@ -11,6 +12,10 @@ const props = defineProps({
   buttonText: {
     type: String,
     default: 'Cargar Excel'
+  },
+  isFileInput: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -18,10 +23,7 @@ const emit = defineEmits(['click', 'file-selected']);
 
 const IconComponent = computed(() => {
   const icons = {
-    Sheet: Sheet,
-    FileUp: FileUp,
-    CirclePlus: CirclePlus,
-    CircleChevronLeft: CircleChevronLeft
+    Sheet, FileUp, CirclePlus, CircleChevronLeft
   };
   return icons[props.iconType] || FileUp;
 });
@@ -29,10 +31,16 @@ const IconComponent = computed(() => {
 const fileInput = ref(null);
 
 const handleClick = () => {
-  fileInput.value.click();
+  logDebug('DashButton clicked');
+  if (props.isFileInput) {
+    fileInput.value.click();
+  } else {
+    emit('click');
+  }
 };
 
 const handleFileChange = (event) => {
+  logDebug('File selected in DashButton');
   emit('file-selected', event);
 };
 </script>
@@ -42,9 +50,16 @@ const handleFileChange = (event) => {
       class="py-[13px] px-[21px] flex justify-center items-center gap-[5px] text-size-16 font-semibold text-color-text hover:text-color-white rounded-[12px] dashbutton"
       @click="handleClick"
   >
-    <component :is="IconComponent" />
+    <component :is="IconComponent"/>
     {{ buttonText }}
-    <input type="file" @change="handleFileChange" style="display: none;" ref="fileInput" />
+    <input
+        v-if="isFileInput"
+        type="file"
+        @change="handleFileChange"
+        accept=".xlsx,.xls"
+        style="display: none;"
+        ref="fileInput"
+    />
   </button>
 </template>
 

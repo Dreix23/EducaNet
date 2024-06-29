@@ -6,7 +6,7 @@ import { ref, onMounted } from 'vue';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '@/services/firebase';
 import { useRouter } from 'vue-router';
-import { logInfo, logError, logDebug, enableLogs } from '@/utils/logger.js';
+import { logInfo, logError, logDebug } from '@/utils/logger.js';
 import { collection, query, where, getDocs, doc, setDoc } from "firebase/firestore";
 import logoSrc from '@/assets/login/logo.png';
 import grupoAlu from '@/assets/login/grupoAlu.png';

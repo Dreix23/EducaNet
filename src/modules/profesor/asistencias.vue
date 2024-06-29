@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, updateDoc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
@@ -7,6 +7,7 @@ import { db } from '@/services/firebase.js';
 import AsistenciaTable from '@/components/AsistenciaTable.vue';
 import moment from 'moment';
 import { Loader2 } from 'lucide-vue-next';
+import { logInfo, logError } from '@/utils/logger.js';
 
 const props = defineProps({
   grupo: String,
@@ -42,7 +43,10 @@ const loadAttendanceData = () => {
                 falta: false,
                 justificado: false,
               }));
-          console.log('Datos de estudiantes cargados:', students.value);
+          logInfo('Datos de estudiantes cargados:', students.value);
+
+          // Guardar en localStorage
+          localStorage.setItem(`students_${group}_${curso}`, JSON.stringify(students.value));
         }
       }
     });
@@ -51,7 +55,7 @@ const loadAttendanceData = () => {
     onSnapshot(attendanceDocRef, (attendanceDocSnap) => {
       if (attendanceDocSnap.exists()) {
         const attendanceData = attendanceDocSnap.data();
-        console.log('Datos de asistencia cargados desde Firebase:', attendanceData);
+        logInfo('Datos de asistencia cargados desde Firebase:', attendanceData);
         students.value.forEach((student) => {
           if (attendanceData[student.id]) {
             student.presente = attendanceData[student.id].presente;
@@ -60,8 +64,10 @@ const loadAttendanceData = () => {
             student.justificado = attendanceData[student.id].justificado;
           }
         });
+        // Guardar en localStorage
+        localStorage.setItem(`attendance_${group}_${curso}_${selectedDate.value}`, JSON.stringify(attendanceData));
       } else {
-        console.log('No se encontraron datos de asistencia para la fecha seleccionada');
+        logInfo('No se encontraron datos de asistencia para la fecha seleccionada');
       }
     });
   }
@@ -82,11 +88,32 @@ onMounted(() => {
             userSchool.value = userData.school;
             userTurno.value = userData.turno;
 
+            // Intentar cargar datos desde localStorage
+            const cachedStudents = localStorage.getItem(`students_${props.grupo}_${props.curso}`);
+            if (cachedStudents) {
+              students.value = JSON.parse(cachedStudents);
+              logInfo('Datos de estudiantes cargados desde localStorage');
+            }
+
+            const cachedAttendance = localStorage.getItem(`attendance_${props.grupo}_${props.curso}_${selectedDate.value}`);
+            if (cachedAttendance) {
+              const attendanceData = JSON.parse(cachedAttendance);
+              students.value.forEach((student) => {
+                if (attendanceData[student.id]) {
+                  student.presente = attendanceData[student.id].presente;
+                  student.retardo = attendanceData[student.id].retardo;
+                  student.falta = attendanceData[student.id].falta;
+                  student.justificado = attendanceData[student.id].justificado;
+                }
+              });
+              logInfo('Datos de asistencia cargados desde localStorage');
+            }
+
             loadAttendanceData();
           }
         });
       } catch (error) {
-        console.error('Error al obtener los datos del usuario:', error);
+        logError('Error al obtener los datos del usuario:', error);
       }
     } else {
       currentUser.value = null;
@@ -122,13 +149,16 @@ const handleSave = async () => {
 
       if (attendanceDocSnap.exists()) {
         await updateDoc(attendanceDocRef, attendanceData);
-        console.log('Asistencias actualizadas en Firebase:', attendanceData);
+        logInfo('Asistencias actualizadas en Firebase:', attendanceData);
       } else {
         await setDoc(attendanceDocRef, attendanceData);
-        console.log('Documento de asistencia creado y datos guardados en Firebase:', attendanceData);
+        logInfo('Documento de asistencia creado y datos guardados en Firebase:', attendanceData);
       }
+
+      // Actualizar localStorage
+      localStorage.setItem(`attendance_${group}_${curso}_${selectedDate.value}`, JSON.stringify(attendanceData));
     } catch (error) {
-      console.error('Error al actualizar las asistencias en Firebase:', error);
+      logError('Error al actualizar las asistencias en Firebase:', error);
     } finally {
       isSaving.value = false;
     }

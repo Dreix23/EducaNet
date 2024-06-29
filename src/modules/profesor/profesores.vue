@@ -1,14 +1,14 @@
 <script setup>
-import {ref, onMounted, watch, onUnmounted} from 'vue';
-import BtnExcelProf from '@/components/BtnExcelProf.vue';
-import {CirclePlus} from 'lucide-vue-next';
+import { ref, onMounted, watch, onUnmounted } from 'vue';
+import { CirclePlus } from 'lucide-vue-next';
 import ProfTable from '@/components/ProfTable.vue';
-import {collection, onSnapshot, query, where} from 'firebase/firestore';
-import {db} from '@/services/firebase.js';
-import {useAuth} from '@/services/userService.js';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db } from '@/services/firebase.js';
+import { useAuth } from '@/services/userService.js';
 import ProfesorDialog from '@/dialogs/ProfesorDialog.vue';
+import { logInfo, logError } from '@/utils/logger.js';
 
-const {userSchool} = useAuth();
+const { userSchool } = useAuth();
 
 const modalActive = ref(false);
 const profesorSeleccionado = ref({});
@@ -17,7 +17,7 @@ const profesores = ref([]);
 
 const toggleModal = (profesor = null) => {
   modalActive.value = !modalActive.value;
-  profesorSeleccionado.value = profesor ? {...profesor, password: profesor.password || ''} : {};
+  profesorSeleccionado.value = profesor ? { ...profesor, password: profesor.password || '' } : {};
   isEditing.value = !!profesor;
   if (profesor && profesor.id) {
     localStorage.setItem('selectedProfessorUID', profesor.id);
@@ -26,25 +26,52 @@ const toggleModal = (profesor = null) => {
 
 let unsubscribe = null;
 
+const loadProfesoresFromLocalStorage = () => {
+  const storedProfesores = localStorage.getItem('profesores');
+  if (storedProfesores) {
+    profesores.value = JSON.parse(storedProfesores);
+    logInfo('Profesores cargados desde localStorage');
+    updateTableData();
+  }
+};
+
+const saveProfesoresToLocalStorage = (profesoresData) => {
+  localStorage.setItem('profesores', JSON.stringify(profesoresData));
+};
+
 const fetchProfesores = () => {
   if (!userSchool.value) return;
 
   unsubscribe = onSnapshot(
       query(collection(db, 'users'), where('school', '==', userSchool.value), where('role', '==', 'profesor')),
       (querySnapshot) => {
-        profesores.value = querySnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+        const profesoresData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        profesores.value = profesoresData;
+        saveProfesoresToLocalStorage(profesoresData);
+        logInfo('Profesores actualizados en tiempo real');
+        updateTableData();
+      },
+      (error) => {
+        logError('Error al escuchar cambios en los profesores:', error);
       }
   );
 };
 
-watch(userSchool, async (newSchool) => {
+watch(userSchool, (newSchool) => {
   if (newSchool) {
-    await fetchProfesores();
+    loadProfesoresFromLocalStorage();
+    fetchProfesores();
   }
 });
 
 onMounted(() => {
+  loadProfesoresFromLocalStorage();
   fetchProfesores();
+  // Verificar si se necesita actualizar los datos al regresar de ProfeCode
+  if (localStorage.getItem('updateProfesoresOnReturn') === 'true') {
+    fetchProfesores();
+    localStorage.removeItem('updateProfesoresOnReturn');
+  }
 });
 
 onUnmounted(() => {
@@ -54,22 +81,22 @@ onUnmounted(() => {
 });
 
 const columns = ref([
-  {name: '#', align: 'center'},
-  {name: 'CODE', align: 'left'},
-  {name: 'NAME', align: 'left'},
-  {name: 'EMAIL', align: 'left'},
-  {name: 'CONTRASEÑA', align: 'left'},
-  {name: 'TURNO', align: 'left'},
-  {name: 'ACTIONS', align: 'center'}
+  { name: '#', align: 'center' },
+  { name: 'CODE', align: 'left' },
+  { name: 'NAME', align: 'left' },
+  { name: 'EMAIL', align: 'left' },
+  { name: 'CONTRASEÑA', align: 'left' },
+  { name: 'TURNO', align: 'left' },
+  { name: 'ACTIONS', align: 'center' }
 ]);
 
 const pagination = ref({
   start: 1,
   end: 10,
-  total: profesores.value.length,
+  total: 0,
   data: [],
   hasPrevPage: false,
-  hasNextPage: profesores.value.length > 10,
+  hasNextPage: false,
   onPrevPage: () => {
     if (pagination.value.start > 1) {
       pagination.value.start = Math.max(pagination.value.start - 10, 1);
@@ -90,15 +117,14 @@ const updateTableData = () => {
   const startIndex = pagination.value.start - 1;
   const endIndex = pagination.value.end;
   pagination.value.data = profesores.value.slice(startIndex, endIndex);
+  pagination.value.total = profesores.value.length;
+  pagination.value.hasNextPage = pagination.value.end < profesores.value.length;
+  pagination.value.hasPrevPage = pagination.value.start > 1;
 };
 
-watch(profesores, (newProfesores) => {
-  pagination.value.total = newProfesores.length;
-  pagination.value.hasNextPage = pagination.value.end < newProfesores.length;
+watch(profesores, () => {
   updateTableData();
-});
-
-updateTableData();
+}, { immediate: true });
 
 const handleCloseModal = () => {
   modalActive.value = false;
@@ -112,8 +138,6 @@ const handleProfesorActualizado = () => {
 
 <template>
   <div class="flex gap-4">
-    <!-- <BtnExcelProf iconType="FileUp" buttonText="Cargar Excel"
-                  class="bg-white hover:bg-green-500 text-black hover:text-white rounded-lg shadow-md"/> -->
     <button @click="toggleModal()"
             class="py-3 px-5 flex justify-center items-center gap-2 text-lg font-semibold bg-white hover:bg-green-500 text-black hover:text-white rounded-lg shadow-md transition-colors duration-300 ease-in-out">
       <CirclePlus/>
@@ -127,5 +151,5 @@ const handleProfesorActualizado = () => {
 </template>
 
 <style scoped>
-/* Add your styles here */
+/* Añade tus estilos aquí */
 </style>

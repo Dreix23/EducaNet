@@ -1,6 +1,5 @@
 <script setup>
-import { defineProps } from 'vue';
-import { ref } from 'vue';
+import { defineProps, ref, watch } from 'vue';
 import { ChevronLeft, ChevronRight, FilePenLine, ArrowBigRightDash } from 'lucide-vue-next';
 import ProfesorDialog from '@/dialogs/ProfesorDialog.vue';
 
@@ -19,28 +18,10 @@ const props = defineProps({
   }
 });
 
-const isLoading = ref(false);
-
-// Funciones de paginación
-const prevPage = () => {
-  props.data.splice(0, props.data.length);
-  props.pagination.start -= props.pagination.perPage;
-  props.pagination.end -= props.pagination.perPage;
-  // Aquí se cargarían los datos correspondientes a la página anterior
-};
-
-const nextPage = () => {
-  props.data.splice(0, props.data.length);
-  props.pagination.start += props.pagination.perPage;
-  props.pagination.end += props.pagination.perPage;
-  // Aquí se cargarían los datos correspondientes a la siguiente página
-};
-
 const editarModalActive = ref(false);
 const profesorSeleccionado = ref({});
 const isEditing = ref(false);
 
-// Función para abrir el modal de edición o adición
 const toggleModal = (profesor = {}) => {
   profesorSeleccionado.value = {...profesor};
   isEditing.value = Object.keys(profesor).length > 0;
@@ -55,11 +36,15 @@ const handleProfessorClick = (id) => {
     console.error('El UID del profesor es undefined');
   }
 };
+
+watch(() => props.data, (newData) => {
+  console.log('Datos actualizados:', newData);
+}, { deep: true });
 </script>
 
 <template>
   <div>
-    <div v-if="!isLoading" class="relative overflow-x-auto shadow-md sm:rounded-lg">
+    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
       <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
         <tr>
@@ -73,9 +58,9 @@ const handleProfessorClick = (id) => {
         </tr>
         </thead>
         <tbody>
-        <tr v-for="(row, index) in props.data" :key="row.cod"
+        <tr v-for="(row, index) in props.data" :key="row.id"
             class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700">
-          <td class="px-6 py-4 text-center">{{ index + 1 }}</td>
+          <td class="px-6 py-4 text-center">{{ index + props.pagination.start }}</td>
           <td class="px-6 py-4">{{ row.code }}</td>
           <td class="px-6 py-4">{{ row.name }}</td>
           <td class="px-6 py-4">{{ row.email }}</td>
@@ -100,9 +85,6 @@ const handleProfessorClick = (id) => {
         </tbody>
       </table>
     </div>
-    <div v-else class="flex justify-center items-center h-64">
-      <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-gray-900"></div>
-    </div>
     <nav class="flex items-center flex-column flex-wrap md:flex-row justify-between pt-4" aria-label="Table navigation">
       <span
           class="text-sm font-normal text-gray-500 dark:text-gray-400 mb-4 md:mb-0 block w-full md:inline md:w-auto text-center">
@@ -112,14 +94,14 @@ const handleProfessorClick = (id) => {
       </span>
       <ul class="inline-flex -space-x-px rtl:space-x-reverse text-sm h-8">
         <li>
-          <a href="#" @click.prevent="prevPage"
+          <a href="#" @click.prevent="pagination.onPrevPage"
              :class="['flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-s-lg', { 'cursor-not-allowed opacity-50': !pagination.hasPrevPage }]"
              :disabled="!pagination.hasPrevPage">
             <ChevronLeft/>
           </a>
         </li>
         <li>
-          <a href="#" @click.prevent="nextPage"
+          <a href="#" @click.prevent="pagination.onNextPage"
              :class="['flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg', { 'cursor-not-allowed opacity-50': !pagination.hasNextPage }]"
              :disabled="!pagination.hasNextPage">
             <ChevronRight/>

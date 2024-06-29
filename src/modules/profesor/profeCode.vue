@@ -1,16 +1,17 @@
 <script setup>
-import {ref, onMounted, watch} from 'vue';
-import {doc, getDoc, updateDoc, arrayUnion, onSnapshot} from 'firebase/firestore';
-import {db} from '@/services/firebase.js';
-import {useAuth} from '@/services/userService.js';
+import { ref, onMounted, watch, onUnmounted } from 'vue';
+import { doc, updateDoc, arrayUnion, onSnapshot } from 'firebase/firestore';
+import { db } from '@/services/firebase.js';
+import { useAuth } from '@/services/userService.js';
 import DashButton from '@/components/DashButton.vue';
 import CardCurso from '@/components/CardCurso.vue';
-import {CirclePlus, Loader} from 'lucide-vue-next';
-import Alert from '@/components/Alert.vue';
-import {getAuth} from 'firebase/auth';
+import { CirclePlus, Loader, CircleChevronLeft } from 'lucide-vue-next';
+import { logInfo, logError } from '@/utils/logger.js';
+import { useRouter } from 'vue-router';
 
-const {userSchool} = useAuth();
-const profesorUID = ref(null);
+const router = useRouter();
+const { currentUser, userSchool, userSchoolName, userRole } = useAuth();
+const profesorUID = ref(localStorage.getItem('selectedProfessorUID'));
 const profesorData = ref({});
 const selectedCurso = ref('');
 const cursos = [
@@ -22,60 +23,10 @@ const cursos = [
 const isActive = ref(false);
 const isLoading = ref(false);
 
-const fetchProfesorData = async (uid) => {
-  console.log("Fetching data for UID:", uid);
-  try {
-    const docRef = doc(db, 'users', uid);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      profesorData.value = docSnap.data();
-      console.log("Datos del profesor:", profesorData.value);
-      // Guardar los datos en el local storage
-      localStorage.setItem(`profesorData_${uid}`, JSON.stringify(profesorData.value));
-    } else {
-      console.log("No such document!");
-    }
-  } catch (error) {
-    console.error("Error fetching professor data:", error);
-  }
-};
-
-const fetchUserSchool = async () => {
-  const auth = getAuth();
-  const user = auth.currentUser;
-  if (user) {
-    const uid = user.uid;
-    try {
-      const userDocRef = doc(db, 'users', uid);
-      const userDocSnap = await getDoc(userDocRef);
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        userSchool.value = userData.colegio;
-        console.log('School:', userSchool.value);
-        if (profesorUID.value) {
-          // Verificar si los datos existen en el local storage
-          const cachedData = localStorage.getItem(`profesorData_${profesorUID.value}`);
-          if (cachedData) {
-            // Si los datos existen en caché, usarlos
-            profesorData.value = JSON.parse(cachedData);
-          } else {
-            // Si no existen en caché, obtenerlos de Firestore
-            fetchProfesorData(profesorUID.value);
-          }
-        }
-      } else {
-        console.log('No such document!');
-      }
-    } catch (error) {
-      console.error('Error fetching user school:', error);
-    }
-  }
-};
-
 const addCursoToProfesor = async (event) => {
   event.preventDefault();
   if (!isActive.value) {
-    console.log('El switch está desactivado. No se puede agregar el curso.');
+    logInfo('El switch está desactivado. No se puede agregar el curso.');
     return;
   }
   if (selectedCurso.value && profesorUID.value) {
@@ -85,63 +36,65 @@ const addCursoToProfesor = async (event) => {
       await updateDoc(profesorDocRef, {
         cursos: arrayUnion({curso: selectedCurso.value})
       });
-      fetchProfesorData(profesorUID.value);
-      console.log('Curso agregado:', selectedCurso.value);
+      logInfo('Curso agregado:', selectedCurso.value);
     } catch (error) {
-      console.error('Error adding course:', error);
+      logError('Error adding course:', error);
     } finally {
       isLoading.value = false;
     }
   }
 };
 
+let unsubscribe = null;
+
 const subscribeToProfesorData = () => {
   if (!profesorUID.value) {
-    console.log('Esperando a que se cargue el UID del profesor');
+    logInfo('Esperando a que se cargue el UID del profesor');
     return;
   }
 
-  const unsubscribe = onSnapshot(doc(db, 'users', profesorUID.value), (doc) => {
+  unsubscribe = onSnapshot(doc(db, 'users', profesorUID.value), (doc) => {
     if (doc.exists()) {
       profesorData.value = doc.data();
-      // Actualizar el almacenamiento local cuando los datos cambian
-      localStorage.setItem(`profesorData_${profesorUID.value}`, JSON.stringify(profesorData.value));
+      logInfo('Datos del profesor actualizados en tiempo real');
     }
   }, (error) => {
-    console.error('Error en la suscripción a los cambios:', error);
+    logError('Error en la suscripción a los cambios:', error);
   });
-
-  return unsubscribe;
 };
 
 onMounted(() => {
-  profesorUID.value = localStorage.getItem('selectedProfessorUID');
-  console.log("UID del profesor recuperado de localStorage:", profesorUID.value);
-  fetchUserSchool();
-  subscribeToProfesorData();
+  logInfo("UID del profesor recuperado de localStorage:", profesorUID.value);
+  if (profesorUID.value) {
+    subscribeToProfesorData();
+  }
 });
 
 watch(profesorUID, (newValue) => {
   if (newValue) {
-    // Verificar si los datos existen en el local storage
-    const cachedData = localStorage.getItem(`profesorData_${newValue}`);
-    if (cachedData) {
-      // Si los datos existen en caché, usarlos
-      profesorData.value = JSON.parse(cachedData);
-    } else {
-      // Si no existen en caché, obtenerlos de Firestore
-      fetchProfesorData(newValue);
-    }
+    subscribeToProfesorData();
   }
 });
+
+onUnmounted(() => {
+  if (unsubscribe) {
+    unsubscribe();
+  }
+});
+
+const handleReturn = () => {
+  localStorage.setItem('updateProfesoresOnReturn', 'true');
+  router.push('/profesores');
+};
 </script>
+
 <template>
   <div class="container-info-prof flex flex-col justify-center items-center">
     <div class="prof-cabe flex justify-between items-center w-full px-4">
-      <router-link to="/profesores">
+      <button @click="handleReturn">
         <DashButton iconType="CircleChevronLeft" buttonText=""
                     class="bg-white hover:bg-primary transition duration-300 ease-in-out"/>
-      </router-link>
+      </button>
       <div class="flex flex-col items-center">
         <img class="w-[60px] h-[60px] rounded-full img-prof"
              src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="user photo">
@@ -181,9 +134,9 @@ watch(profesorUID, (newValue) => {
         </div>
       </div>
     </div>
-
   </div>
 </template>
+
 <style scoped>
 .prof-body {
   padding: 25px 24px;

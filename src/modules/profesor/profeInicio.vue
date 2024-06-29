@@ -6,102 +6,64 @@ import { useAuth } from '@/services/userService.js';
 import CardCurso from '@/components/CardCurso.vue';
 import { CirclePlus, Loader } from 'lucide-vue-next';
 import Alert from '@/components/Alert.vue';
-import { getAuth } from 'firebase/auth';
+import { logInfo, logError } from '@/utils/logger.js';
 
-const { userSchool, currentUser } = useAuth();
+const { currentUser } = useAuth();
 const profesorData = ref({});
-const selectedCurso = ref('');
-
 const isActive = ref(true);
-const isLoading = ref(false);
 
 const fetchProfesorData = async (uid) => {
-  console.log("Fetching data for UID:", uid);
+  logInfo("Fetching data for UID:", uid);
   try {
-    const docRef = doc(db, 'users', uid);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      profesorData.value = docSnap.data();
-      console.log("Datos del profesor:", profesorData.value);
-      // Guardar los datos en el local storage
-      localStorage.setItem(`profesorData_${uid}`, JSON.stringify(profesorData.value));
+    const cachedData = localStorage.getItem(`profesorData_${uid}`);
+    if (cachedData) {
+      profesorData.value = JSON.parse(cachedData);
+      logInfo("Datos del profesor cargados desde localStorage");
     } else {
-      console.log("No such document!");
+      const docRef = doc(db, 'users', uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        profesorData.value = docSnap.data();
+        localStorage.setItem(`profesorData_${uid}`, JSON.stringify(profesorData.value));
+        logInfo("Datos del profesor obtenidos de Firestore y guardados en localStorage");
+      } else {
+        logError("No se encontró el documento del profesor");
+      }
     }
   } catch (error) {
-    console.error("Error fetching professor data:", error);
-  }
-};
-
-const fetchUserSchool = async () => {
-  const auth = getAuth();
-  const user = auth.currentUser;
-  if (user) {
-    const uid = user.uid;
-    try {
-      const userDocRef = doc(db, 'users', uid);
-      const userDocSnap = await getDoc(userDocRef);
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        userSchool.value = userData.school;
-        if (currentUser.value) {
-          // Verificar si los datos existen en el local storage
-          const cachedData = localStorage.getItem(`profesorData_${currentUser.value.uid}`);
-          if (cachedData) {
-            // Si los datos existen en caché, usarlos
-            profesorData.value = JSON.parse(cachedData);
-          } else {
-            // Si no existen en caché, obtenerlos de Firestore
-            fetchProfesorData(currentUser.value.uid);
-          }
-        }
-      } else {
-        console.log('No such document!');
-      }
-    } catch (error) {
-      console.error('Error fetching user school:', error);
-    }
+    logError("Error fetching professor data:", error);
   }
 };
 
 const subscribeToProfesorData = () => {
   if (!currentUser.value) {
-    console.log('Esperando a que se cargue el UID del usuario actual');
+    logInfo('Esperando a que se cargue el UID del usuario actual');
     return;
   }
 
-  const unsubscribe = onSnapshot(doc(db, 'users', currentUser.value.uid), (doc) => {
+  return onSnapshot(doc(db, 'users', currentUser.value.uid), (doc) => {
     if (doc.exists()) {
       profesorData.value = doc.data();
-      // Actualizar el almacenamiento local cuando los datos cambian
       localStorage.setItem(`profesorData_${currentUser.value.uid}`, JSON.stringify(profesorData.value));
+      logInfo('Datos del profesor actualizados en tiempo real');
     }
   }, (error) => {
-    console.error('Error en la suscripción a los cambios:', error);
+    logError('Error en la suscripción a los cambios:', error);
   });
-
-  return unsubscribe;
 };
 
 onMounted(() => {
   if (currentUser.value) {
-    console.log("UID del usuario actual:", currentUser.value.uid);
-    fetchUserSchool();
-    subscribeToProfesorData();
+    logInfo("UID del usuario actual:", currentUser.value.uid);
+    fetchProfesorData(currentUser.value.uid);
+    const unsubscribe = subscribeToProfesorData();
+    return () => unsubscribe();
   }
 });
 
 watch(currentUser, (newValue) => {
   if (newValue) {
-    // Verificar si los datos existen en el local storage
-    const cachedData = localStorage.getItem(`profesorData_${newValue.uid}`);
-    if (cachedData) {
-      // Si los datos existen en caché, usarlos
-      profesorData.value = JSON.parse(cachedData);
-    } else {
-      // Si no existen en caché, obtenerlos de Firestore
-      fetchProfesorData(newValue.uid);
-    }
+    fetchProfesorData(newValue.uid);
   }
 });
 </script>

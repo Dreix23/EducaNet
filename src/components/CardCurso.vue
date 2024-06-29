@@ -5,6 +5,7 @@ import { ref, onMounted, watch } from 'vue';
 import { getDocs, collection, doc, getDoc, updateDoc, arrayUnion, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
 import { useAuth } from '@/services/userService.js';
+import { logInfo, logError } from '@/utils/logger.js';
 
 const route = useRoute();
 const router = useRouter();
@@ -14,29 +15,15 @@ const updateRouteName = () => {
   routeName.value = route.path.split('/').pop();
 };
 
-// Actualizar el nombre de la ruta al montar el componente
 updateRouteName();
-
-// Observar cambios en la ruta
-watch(route, () => {
-  updateRouteName();
-});
+watch(route, updateRouteName);
 
 const { userSchool, userRole } = useAuth();
 
 const props = defineProps({
-  curso: {
-    type: Object,
-    required: true
-  },
-  isActive: {
-    type: Boolean,
-    default: false
-  },
-  profesorUID: {
-    type: String,
-    required: true
-  }
+  curso: { type: Object, required: true },
+  isActive: { type: Boolean, default: false },
+  profesorUID: { type: String, required: true }
 });
 
 const gradosSecciones = ref([]);
@@ -45,18 +32,17 @@ const selectedGrupos = ref({});
 
 const fetchGradosSecciones = async () => {
   if (!userSchool.value) {
-    console.log('Esperando a que se cargue el nombre de la escuela');
+    logInfo('Esperando a que se cargue el nombre de la escuela');
     return;
   }
 
-  // Verificar si los datos existen en el local storage
-  const cachedData = localStorage.getItem(`gradosSecciones_${userSchool.value}`);
+  const cacheKey = `gradosSecciones_${userSchool.value}`;
+  const cachedData = localStorage.getItem(cacheKey);
 
   if (cachedData) {
-    // Si los datos existen en caché, usarlos
     gradosSecciones.value = JSON.parse(cachedData);
+    logInfo('Datos de grados y secciones cargados desde localStorage');
   } else {
-    // Si no existen en caché, obtenerlos de Firestore
     try {
       const querySnapshot = await getDocs(collection(db, `colegios/${userSchool.value}/alumnos`));
       const grupos = querySnapshot.docs.map(doc => doc.id);
@@ -78,12 +64,10 @@ const fetchGradosSecciones = async () => {
             secciones: Array.from(grados[grado.toString()])
           }));
 
-      console.log("Grados y secciones:", gradosSecciones.value);
-
-      // Guardar los datos en el local storage
-      localStorage.setItem(`gradosSecciones_${userSchool.value}`, JSON.stringify(gradosSecciones.value));
+      localStorage.setItem(cacheKey, JSON.stringify(gradosSecciones.value));
+      logInfo("Grados y secciones obtenidos y guardados en localStorage");
     } catch (error) {
-      console.error('Error fetching grades and sections:', error);
+      logError('Error fetching grades and sections:', error);
     }
   }
 
@@ -109,7 +93,7 @@ const fetchSelectedData = async () => {
       }
     }
   } catch (error) {
-    console.error('Error fetching selected data:', error);
+    logError('Error fetching selected data:', error);
   }
 };
 
@@ -129,42 +113,37 @@ const saveDataToFirebase = async () => {
         if (cursoIndex !== -1) {
           const updatedCursos = [...profesorData.cursos];
           updatedCursos[cursoIndex] = cursoData;
-          await updateDoc(profesorDocRef, {
-            cursos: updatedCursos
-          });
-          console.log('Datos actualizados en Firebase');
+          await updateDoc(profesorDocRef, { cursos: updatedCursos });
+          logInfo('Datos actualizados en Firebase');
         } else {
-          await updateDoc(profesorDocRef, {
-            cursos: arrayUnion(cursoData)
-          });
-          console.log('Datos guardados en Firebase');
+          await updateDoc(profesorDocRef, { cursos: arrayUnion(cursoData) });
+          logInfo('Datos guardados en Firebase');
         }
       }
     } catch (error) {
-      console.error('Error al guardar/actualizar los datos en Firebase:', error);
+      logError('Error al guardar/actualizar los datos en Firebase:', error);
     }
   }
 };
 
 const subscribeToGradosSecciones = () => {
   if (!userSchool.value) {
-    console.log('Esperando a que se cargue el nombre de la escuela');
+    logInfo('Esperando a que se cargue el nombre de la escuela');
     return;
   }
 
-  const unsubscribe = onSnapshot(collection(db, `colegios/${userSchool.value}/alumnos`), async () => {
+  return onSnapshot(collection(db, `colegios/${userSchool.value}/alumnos`), async () => {
     await fetchGradosSecciones();
   }, (error) => {
-    console.error('Error en la suscripción a los cambios:', error);
+    logError('Error en la suscripción a los cambios:', error);
   });
-
-  return unsubscribe;
 };
 
 onMounted(() => {
   fetchGradosSecciones();
   fetchSelectedData();
-  subscribeToGradosSecciones();
+  const unsubscribe = subscribeToGradosSecciones();
+  return () => unsubscribe();
 });
 
 watch(selectedGrupos, saveDataToFirebase, { deep: true });

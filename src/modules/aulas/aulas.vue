@@ -1,37 +1,44 @@
 <script setup>
 import DashButton from '@/components/DashButton.vue';
 import GradoItem from '@/components/GradoItem.vue';
+import Alert from '@/components/Alert.vue';
 import { ref, computed, onMounted, watch } from 'vue';
 import * as XLSX from 'xlsx';
 import { doc, setDoc, collection, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
 import { useAuth } from '@/services/userService.js';
+import { logInfo, logError, logDebug } from '@/utils/logger.js';
 
-const { currentUser, userSchool } = useAuth();
+const { userSchool } = useAuth();
 
 const grupos = ref([]);
+const showAlert = ref(false);
+const alertType = ref('');
+const alertTitle = ref('');
+const alertInfo = ref('');
+const alertButtonText = ref('');
 
 const handleFileUpload = async (event) => {
   const file = event.target.files[0];
-  console.log("Archivo seleccionado:", file); // Verifica que el archivo se selecciona
+  logDebug("Archivo seleccionado:", file);
 
   if (!file) return;
 
   const reader = new FileReader();
   reader.onload = async (e) => {
     try {
-      console.log("Datos del archivo leídos:", e.target.result); // Verifica que los datos del archivo se leen correctamente
+      logDebug("Datos del archivo leídos");
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
 
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
-      console.log("Nombre de la primera hoja:", firstSheetName); // Verifica el nombre de la primera hoja
+      logDebug("Nombre de la primera hoja:", firstSheetName);
 
       const gruposData = {};
 
       const range = XLSX.utils.decode_range(worksheet['!ref']);
-      console.log("Rango de la hoja de cálculo:", range); // Verifica el rango de la hoja de cálculo
+      logDebug("Rango de la hoja de cálculo:", range);
       for (let R = range.s.r + 1; R <= range.e.r; ++R) {
         const grupo = worksheet[XLSX.utils.encode_cell({ c: 2, r: R })]?.v || 'Grupo desconocido';
         if (!gruposData[grupo]) {
@@ -47,7 +54,7 @@ const handleFileUpload = async (event) => {
         gruposData[grupo].push(alumno);
       }
 
-      console.log("Datos de los grupos:", gruposData); // Verifica los datos que se van a cargar
+      logDebug("Datos de los grupos:", gruposData);
 
       try {
         for (const grupo in gruposData) {
@@ -58,18 +65,37 @@ const handleFileUpload = async (event) => {
           });
           await setDoc(doc(db, `colegios/${userSchool.value}/alumnos/${grupo}`), docData);
         }
-        alert('Datos cargados exitosamente');
+        logInfo('Datos cargados exitosamente');
 
-        // Actualizar los datos en el local storage después de cargarlos en Firestore
+        // Mostrar alerta de éxito
+        showAlert.value = true;
+        alertType.value = 'confirm';
+        alertTitle.value = 'Éxito';
+        alertInfo.value = 'Datos cargados exitosamente';
+        alertButtonText.value = 'Aceptar';
+
         localStorage.setItem('gruposData', JSON.stringify(Object.keys(gruposData)));
 
         fetchGrupos();
       } catch (error) {
-        console.error('Error al cargar datos:', error);
-        alert('Ocurrió un error al cargar los datos. Por favor, intenta de nuevo.');
+        logError('Error al cargar datos:', error);
+
+        // Mostrar alerta de error
+        showAlert.value = true;
+        alertType.value = 'alert';
+        alertTitle.value = 'Error';
+        alertInfo.value = 'Ocurrió un error al cargar los datos. Por favor, intenta de nuevo.';
+        alertButtonText.value = 'Cerrar';
       }
     } catch (error) {
-      console.error('Error en el procesamiento del archivo:', error);
+      logError('Error en el procesamiento del archivo:', error);
+
+      // Mostrar alerta de error
+      showAlert.value = true;
+      alertType.value = 'alert';
+      alertTitle.value = 'Error';
+      alertInfo.value = 'Error en el procesamiento del archivo. Por favor, verifica el formato e intenta de nuevo.';
+      alertButtonText.value = 'Cerrar';
     }
   };
 
@@ -78,48 +104,46 @@ const handleFileUpload = async (event) => {
 
 const fetchGrupos = async () => {
   if (!userSchool.value) {
-    console.log('Esperando a que se cargue el nombre de la escuela');
+    logDebug('Esperando a que se cargue el nombre de la escuela');
     return;
   }
 
-  // Verificar si los datos existen en el local storage
   const cachedData = localStorage.getItem('gruposData');
 
   if (cachedData) {
-    // Si los datos existen en caché, usarlos
     grupos.value = JSON.parse(cachedData);
   } else {
-    // Si no existen en caché, obtenerlos de Firestore
     try {
       const querySnapshot = await getDocs(collection(db, `colegios/${userSchool.value}/alumnos`));
       grupos.value = querySnapshot.docs.map(doc => doc.id);
 
-      // Guardar los datos en el local storage
       localStorage.setItem('gruposData', JSON.stringify(grupos.value));
     } catch (error) {
-      console.error('Error al obtener grupos:', error);
-      alert('Ocurrió un error al obtener los datos de grupos. Por favor, recarga la página.');
+      logError('Error al obtener grupos:', error);
+
+      // Mostrar alerta de error
+      showAlert.value = true;
+      alertType.value = 'alert';
+      alertTitle.value = 'Error';
+      alertInfo.value = 'Ocurrió un error al obtener los datos de grupos. Por favor, recarga la página.';
+      alertButtonText.value = 'Cerrar';
     }
   }
 };
 
-// Nueva función para suscribirse a los cambios en Firestore
 const subscribeToGrupos = () => {
   if (!userSchool.value) {
-    console.log('Esperando a que se cargue el nombre de la escuela');
+    logDebug('Esperando a que se cargue el nombre de la escuela');
     return;
   }
 
   const unsubscribe = onSnapshot(collection(db, `colegios/${userSchool.value}/alumnos`), (snapshot) => {
     grupos.value = snapshot.docs.map(doc => doc.id);
-
-    // Actualizar el almacenamiento local cuando los datos cambian
     localStorage.setItem('gruposData', JSON.stringify(grupos.value));
   }, (error) => {
-    console.error('Error en la suscripción a los cambios:', error);
+    logError('Error en la suscripción a los cambios:', error);
   });
 
-  // Retornar la función de desuscripción para usarla si es necesario
   return unsubscribe;
 };
 
@@ -140,17 +164,21 @@ const getGradosAndSecciones = computed(() => {
   }));
 });
 
+const closeAlert = () => {
+  showAlert.value = false;
+};
+
 watch(userSchool, (newSchool) => {
   if (newSchool) {
     fetchGrupos();
-    subscribeToGrupos(); // Suscribirse a los cambios en tiempo real
+    subscribeToGrupos();
   }
 });
 
 onMounted(() => {
   if (userSchool.value) {
     fetchGrupos();
-    subscribeToGrupos(); // Suscribirse a los cambios en tiempo real
+    subscribeToGrupos();
   }
 });
 </script>
@@ -161,9 +189,9 @@ onMounted(() => {
         iconType="FileUp"
         buttonText="Cargar Excel"
         class="bg-color-white hover:bg-color-green"
+        :isFileInput="true"
         @file-selected="handleFileUpload"
-    >
-    </DashButton>
+    />
   </div>
   <div class="bg-color-white container-items-grado flex flex-col justify-center items-center gap-[10px]">
     <GradoItem
@@ -173,6 +201,18 @@ onMounted(() => {
         :sections="grado.sections"
     />
   </div>
+
+  <!-- Componente Alert -->
+  <Alert
+      v-if="showAlert"
+      :Type="alertType"
+      :TitleAlert="alertTitle"
+      :InfoAlert="alertInfo"
+      :ButonText="alertButtonText"
+      @confirm="closeAlert"
+      @cancel="closeAlert"
+      @close="closeAlert"
+  />
 </template>
 
 <style scoped>
