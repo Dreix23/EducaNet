@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, ref } from 'vue';
+import { defineProps, ref, computed } from 'vue';
 import UpdateTareaDialog from '@/dialogs/UpdateTareaDialog.vue';
 import NotasTareasDialog from '@/dialogs/NotasTareasDialog.vue';
 import Alert from '@/components/Alert.vue';
@@ -47,6 +47,15 @@ const handleDeleteCancel = () => {
   showDeleteAlert.value = false;
   tareaToDelete.value = null;
 };
+
+const sortedTareas = computed(() => {
+  if (!props.tareas) return [];
+  return [...props.tareas].sort((a, b) => {
+    const dateA = new Date(a.fechaInicial.split(', ')[0].split('/').reverse().join('-'));
+    const dateB = new Date(b.fechaInicial.split(', ')[0].split('/').reverse().join('-'));
+    return dateB - dateA;
+  });
+});
 </script>
 
 <template>
@@ -65,10 +74,10 @@ const handleDeleteCancel = () => {
       <tr v-if="isLoading">
         <td colspan="5" class="px-6 py-4 text-center">Cargando tareas...</td>
       </tr>
-      <tr v-if="!isLoading && tareas.length === 0">
+      <tr v-if="!isLoading && sortedTareas.length === 0">
         <td colspan="5" class="px-6 py-4 text-center">No hay tareas disponibles</td>
       </tr>
-      <tr v-for="tarea in tareas" :key="tarea.id"
+      <tr v-for="tarea in sortedTareas" :key="tarea.id"
           class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
         <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
           {{ tarea.titulo }}

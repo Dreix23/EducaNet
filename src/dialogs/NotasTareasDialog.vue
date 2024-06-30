@@ -5,6 +5,8 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, onSnapshot, collection, getDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
 import { Loader } from 'lucide-vue-next';
+import { enviarNotificacionATodosLosPadres } from '@/services/notificationService.js';
+import { logInfo, logError, logDebug } from '@/utils/logger.js';
 
 const route = useRoute();
 const isDialogOpen = ref(false);
@@ -52,7 +54,7 @@ const fetchStudents = async () => {
                     };
                   })
           );
-          console.log('Datos de estudiantes cargados:', students.value);
+          logDebug('Datos de estudiantes cargados:', students.value);
         }
       }
     });
@@ -61,10 +63,11 @@ const fetchStudents = async () => {
 
 const saveGrades = async () => {
   const curso = route.params.curso;
+  const grupo = route.params.grupo;
   isLoading.value = true;
 
-  console.log('Curso:', curso);
-  console.log('Tarea ID:', tareaId.value);
+  logDebug('Curso:', curso);
+  logDebug('Tarea ID:', tareaId.value);
 
   const collectionPath = `colegios/${userSchool.value}/cursos/${curso}/tareas/${tareaId.value}/calificaciones`;
 
@@ -79,10 +82,23 @@ const saveGrades = async () => {
       await setDoc(calificacionDocRef, calificacionData);
     }
 
-    console.log('Calificaciones guardadas exitosamente');
+    logInfo('Calificaciones guardadas exitosamente');
     message.value = 'Calificaciones guardadas exitosamente.';
+
+    // Enviar notificación a los padres
+    const tareaDocRef = doc(db, `colegios/${userSchool.value}/cursos/${curso}/tareas`, tareaId.value);
+    const tareaDoc = await getDoc(tareaDocRef);
+    if (tareaDoc.exists()) {
+      const tareaData = tareaDoc.data();
+      const mensaje = `Se han publicado las calificaciones para la tarea "${tareaData.titulo}" en el curso ${curso}.`;
+      await enviarNotificacionATodosLosPadres(grupo, mensaje, userSchool.value);
+      logInfo('Notificaciones enviadas a los padres');
+    } else {
+      logError('No se encontró la tarea para enviar la notificación');
+    }
+
   } catch (error) {
-    console.error('Error al guardar las calificaciones:', error);
+    logError('Error al guardar las calificaciones:', error);
     message.value = 'Error al guardar las calificaciones. Por favor, intenta nuevamente.';
   } finally {
     isLoading.value = false;
@@ -107,7 +123,7 @@ onMounted(() => {
           }
         });
       } catch (error) {
-        console.error('Error al obtener los datos del usuario:', error);
+        logError('Error al obtener los datos del usuario:', error);
       }
     } else {
       currentUser.value = null;

@@ -1,8 +1,11 @@
 <script setup>
-import { defineExpose, ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useAuth } from '@/services/userService.js';
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
+import { enviarNotificacionATodosLosPadres } from '@/services/notificationService.js';
+import { logInfo, logError, logDebug } from '@/utils/logger.js';
+import { Loader2, X } from 'lucide-vue-next';
 
 const props = defineProps({
   curso: String,
@@ -17,30 +20,46 @@ const fechaPublicacion = ref('');
 const isDialogOpen = ref(false);
 const isLoading = ref(false);
 
+onMounted(() => {
+  logDebug(`Componente de avisos montado. Curso: ${props.curso}, Grupo: ${props.grupo}, Escuela: ${userSchool.value}`);
+});
+
 const openDialog = () => {
   isDialogOpen.value = true;
+  logDebug(`Diálogo de avisos abierto. Curso: ${props.curso}, Grupo: ${props.grupo}`);
 };
 
 const closeDialog = () => {
   isDialogOpen.value = false;
+  resetForm();
+};
+
+const resetForm = () => {
   titulo.value = '';
   descripcion.value = '';
   fechaPublicacion.value = '';
 };
 
 const addAviso = async () => {
+  if (!titulo.value || !fechaPublicacion.value) {
+    logError('Título y fecha de publicación son obligatorios');
+    return;
+  }
+
   isLoading.value = true;
 
-  const currentDate = new Date().toISOString().split('T')[0];
+  const currentDate = new Date().toLocaleString('es-ES', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
 
   const avisoData = {
-    titulo: titulo.value || '',
-    descripcion: descripcion.value || '',
-    fechaPublicacion: fechaPublicacion.value || currentDate,
-    grupo: props.grupo || ''
+    titulo: titulo.value,
+    descripcion: descripcion.value,
+    fechaPublicacion: fechaPublicacion.value,
+    fechaCreacion: currentDate,
+    grupo: props.grupo
   };
 
-  console.log('Datos del aviso:', avisoData);
+  logDebug('Datos del aviso:', avisoData);
+  logDebug(`Añadiendo aviso para el grupo: ${props.grupo}`);
 
   const collectionPath = `colegios/${userSchool.value}/cursos/${props.curso}/avisos`;
   const avisoCollectionRef = collection(db, collectionPath);
@@ -48,19 +67,26 @@ const addAviso = async () => {
   try {
     const avisoDocRef = doc(avisoCollectionRef);
     await setDoc(avisoDocRef, avisoData);
-    console.log('Aviso agregado en Firebase:', avisoData);
+    logInfo('Aviso agregado en Firebase:', avisoData);
+
+    const tituloNotificacion = 'Nuevo aviso';
+    const mensaje = `${props.curso}: ${avisoData.titulo}. Publicado el ${avisoData.fechaPublicacion}.`;
+    logDebug(`Enviando notificación a los padres. Grupo: ${props.grupo}, Colegio: ${userSchool.value}`);
+    await enviarNotificacionATodosLosPadres(props.grupo, tituloNotificacion, mensaje, userSchool.value);
+
+    closeDialog();
   } catch (error) {
-    console.error('Error al agregar el aviso en Firebase:', error);
+    logError('Error al agregar el aviso en Firebase:', error);
+  } finally {
+    isLoading.value = false;
   }
-
-  isLoading.value = false;
-  closeDialog();
 };
 
-const getCurrentDate = () => {
+const minDate = computed(() => {
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   return today.toISOString().split('T')[0];
-};
+});
 
 defineExpose({
   openDialog,
@@ -74,39 +100,35 @@ defineExpose({
       <div class="absolute inset-0 bg-gray-900 opacity-50" @click="closeDialog"></div>
       <div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md z-10 relative">
         <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-bold text-blue-600 text-center flex-grow">Nuevo Aviso</h2>
-          <button @click="closeDialog" class="text-gray-500 hover:text-gray-700 ml-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                 stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
+          <h2 class="text-2xl font-bold text-blue-600">Nuevo Aviso</h2>
+          <button @click="closeDialog" class="text-gray-500 hover:text-gray-700">
+            <X class="h-6 w-6" />
           </button>
         </div>
         <form @submit.prevent="addAviso">
-          <div class="mb-6 relative">
-            <label for="titulo" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Título</label>
+          <div class="mb-6">
+            <label for="titulo" class="block mb-2 text-sm font-medium text-gray-900">Título</label>
             <input id="titulo" v-model="titulo" required placeholder="Título"
-                   class="w-full pl-3 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none focus:border-color-gray"/>
+                   class="w-full px-3 py-4 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
           </div>
-          <div class="mb-6 relative">
-            <label for="descripcion"
-                   class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Descripción</label>
+          <div class="mb-6">
+            <label for="descripcion" class="block mb-2 text-sm font-medium text-gray-900">Descripción</label>
             <textarea id="descripcion" v-model="descripcion" rows="4"
-                      class="w-full pl-3 pr-3 py-4 text-gray-700 border border-color-gray-1 rounded-[15px] focus:outline-none focus:border-color-gray"
+                      class="w-full px-3 py-4 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Descripción del Aviso"></textarea>
           </div>
-          <div class="mb-6 relative">
-            <label for="fechaPublicacion" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Fecha de Publicación</label>
-            <input type="date" id="fechaPublicacion" v-model="fechaPublicacion"
-                   :min="getCurrentDate()"
-                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                   placeholder="Seleccionar fecha">
+          <div class="mb-6">
+            <label for="fechaPublicacion" class="block mb-2 text-sm font-medium text-gray-900">Fecha de Publicación</label>
+            <input type="date" id="fechaPublicacion" v-model="fechaPublicacion" required
+                   :min="minDate"
+                   class="w-full px-3 py-4 text-gray-700 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
           </div>
           <div class="flex justify-center">
             <button type="submit"
-                    class="bg-color-primary hover:bg-color-blue transition-colors duration-300 ease-in-out text-white font-bold py-3 px-6 rounded-[9px]"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center transition-colors duration-300"
                     :disabled="isLoading">
-              {{ isLoading ? 'Agregando...' : 'Agregar' }}
+              <Loader2 v-if="isLoading" class="animate-spin mr-2" />
+              {{ isLoading ? 'Agregando...' : 'Agregar Aviso' }}
             </button>
           </div>
         </form>
@@ -116,4 +138,5 @@ defineExpose({
 </template>
 
 <style scoped>
+/* Estilos existentes */
 </style>
