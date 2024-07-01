@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { CirclePlus } from 'lucide-vue-next';
 import AddAviso from "@/dialogs/AddAvisoDirectorDialog.vue";
 import TableAvisos from '@/components/TableGeneralAvisos.vue';
-import { collection, query, orderBy, doc, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, doc, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
 import { useAuth } from '@/services/userService.js';
 import { logError, logInfo } from '@/utils/logger.js';
@@ -58,6 +58,17 @@ const setupAvisosListener = () => {
   }
 }
 
+const deleteAviso = async (avisoId) => {
+  try {
+    const schoolDocRef = doc(db, 'colegios', userSchool.value);
+    const avisoDocRef = doc(schoolDocRef, 'avisos', avisoId);
+    await deleteDoc(avisoDocRef);
+    logInfo(`Aviso eliminado con éxito: ${avisoId}`);
+  } catch (error) {
+    logError("Error al eliminar el aviso:", error);
+  }
+};
+
 onMounted(() => {
   loadAvisosFromLocalStorage();
   setupAvisosListener();
@@ -78,7 +89,7 @@ onUnmounted(() => {
       Agregar aviso
     </button>
     <div class="contianer-table mt-[20px]">
-      <TableAvisos :avisos="avisos" />
+      <TableAvisos :avisos="avisos" @deleteAviso="deleteAviso" />
     </div>
   </div>
   <AddAviso ref="dialogRef" />

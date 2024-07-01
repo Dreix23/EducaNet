@@ -1,15 +1,18 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { collection, query, where, onSnapshot, doc } from "firebase/firestore";
 import { db } from '@/services/firebase';
 import SchoolDialog from '@/dialogs/SchoolDialog.vue';
 import CardCole from '@/components/CardCole.vue';
 import { useAuth } from '@/services/userService';
+import { logInfo, logError, logDebug } from '@/utils/logger.js';
+import { Loader2 } from 'lucide-vue-next';
 
-const { currentUser, userSchool, userSchoolName, userRole } = useAuth();
+const { currentUser, userSchoolName, userRole } = useAuth();
 const dialogRef = ref(null);
 const schools = ref([]);
 let unsubscribe = null;
+const imageLoading = ref(true);
 
 const openDialog = () => {
   if (dialogRef.value) {
@@ -17,22 +20,68 @@ const openDialog = () => {
   }
 };
 
+const userHistory = computed(() => currentUser.value?.history || '');
+const userProfileImage = computed(() => currentUser.value?.profileImageUrl || '');
+
+function saveToLocalStorage(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+function getFromLocalStorage(key) {
+  const data = localStorage.getItem(key);
+  return data ? JSON.parse(data) : null;
+}
+
+async function subscribeToUserData() {
+  if (currentUser.value?.uid) {
+    const userDocRef = doc(db, "users", currentUser.value.uid);
+
+    const localUserData = getFromLocalStorage(`userData_${currentUser.value.uid}`);
+    if (localUserData) {
+      Object.assign(currentUser.value, localUserData);
+      logInfo('Datos de usuario cargados desde almacenamiento local');
+    }
+
+    unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const userData = docSnapshot.data();
+        Object.assign(currentUser.value, userData);
+        saveToLocalStorage(`userData_${currentUser.value.uid}`, userData);
+        logInfo('Datos de usuario actualizados en tiempo real');
+      }
+    });
+  }
+}
+
 async function subscribeToSchools() {
   const q = query(collection(db, "users"), where("role", "==", "director"));
+
+  const localSchools = getFromLocalStorage('schools');
+  if (localSchools) {
+    schools.value = localSchools;
+    logInfo('Escuelas cargadas desde almacenamiento local');
+  }
+
   unsubscribe = onSnapshot(q, (snapshot) => {
     const directorSchools = [];
     snapshot.forEach((doc) => {
       directorSchools.push({ ...doc.data(), uid: doc.id });
     });
     schools.value = directorSchools;
+    saveToLocalStorage('schools', directorSchools);
+    logInfo('Escuelas actualizadas en tiempo real');
   });
 }
 
 onMounted(async () => {
   try {
-    await subscribeToSchools();
+    if (userRole.value === 'director') {
+      await subscribeToUserData();
+    } else if (userRole.value === 'admin') {
+      await subscribeToSchools();
+    }
   } catch (error) {
-    console.error('Error al obtener los colegios:', error);
+    logError('Error al obtener los datos:', error);
   }
 });
 
@@ -41,29 +90,38 @@ onUnmounted(() => {
     unsubscribe();
   }
 });
+
+watch([currentUser, schools], () => {
+  logDebug('Datos actualizados:', {
+    user: currentUser.value?.email,
+    role: userRole.value,
+    schoolsCount: schools.value.length
+  });
+});
+
+const handleImageLoad = () => {
+  imageLoading.value = false;
+};
 </script>
 
 <template>
   <div v-if="userRole === 'director'" class="flex flex-col gap-[25px] items-center">
     <div class="card-cole">
-      <div class="container-img">
+      <div class="container-img relative">
+        <Loader2 v-if="imageLoading" class="animate-spin absolute inset-0 m-auto" size="48" />
         <img
-          src="https://4.bp.blogspot.com/-oyzJQ9glbYI/V0Y4f08QC5I/AAAAAAAAxdc/4ILEsz1KLo8LVLKLvCd9yVJMepuGfSTPQCLcB/s640/ie-00884-los-olivos-insignia.jpg"
-          alt="Escudo los olivos">
+            :src="userProfileImage"
+            :alt="'Escudo ' + userSchoolName"
+            @load="handleImageLoad"
+            :class="{ 'opacity-0': imageLoading, 'opacity-100 transition-opacity duration-300': !imageLoading }"
+        >
       </div>
       <div class="container-info">
-        <h1 class="text-2xl font-semibold text-gray-800 uppercase text-center">Bienvenido al colegio {{ userSchoolName
-          }}</h1>
+        <h1 class="text-2xl font-semibold text-gray-800 uppercase text-center">
+          Bienvenido al colegio {{ userSchoolName }}
+        </h1>
         <div class="parrafos">
-          <p>La Institución educativa Colegio Los Olivos se halla en el lugar de Los Olivos, provincia de Nueva
-            Cajamarca,
-            tal I.E. compete a la UGEL RIOJA que controla el servicio educativo, y esta última corresponde a la
-            Dirección
-            regional de educación DRE SAN MARTIN.</p>
-          <p>La institución Colegio Los Olivos quiere hallar y amplificar personas capaces con una alta autoestima,
-            conciencia, destrezas sociales y una sólida formación académica, moral y emocional para que puedan obtener
-            el
-            éxito personal y profesional dentro de una sociedad coetáneo y cambiante.</p>
+          <p>{{ userHistory }}</p>
         </div>
       </div>
     </div>
@@ -101,7 +159,6 @@ onUnmounted(() => {
   height: 150px;
   border-radius: 100%;
   border: 5px solid #000;
-  mask-image: url(https://4.bp.blogspot.com/-oyzJQ9glbYI/V0Y4f08QC5I/AAAAAAAAxdc/4ILEsz1KLo8LVLKLvCd9yVJMepuGfSTPQCLcB/s640/ie-00884-los-olivos-insignia.jpg);
   mask-position: center;
   display: flex;
   justify-content: center;

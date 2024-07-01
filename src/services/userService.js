@@ -1,9 +1,9 @@
 // services/userService.js
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/services/firebase.js';
-import { logInfo, logError } from '@/utils/logger.js';
+import { logInfo, logError, logDebug } from '@/utils/logger.js';
 import SecureLS from 'secure-ls';
 
 const ls = new SecureLS({ encodingType: 'aes' });
@@ -34,20 +34,22 @@ function clearUserDataSecurely() {
 
 export function useAuth() {
     const auth = getAuth();
+    let unsubscribe = null;
 
-    async function fetchAndSetUserData(user) {
-        try {
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDocSnap = await getDoc(userDocRef);
+    function setUserData(user, userData) {
+        currentUser.value = user;
+        userSchool.value = userData.school;
+        userSchoolName.value = userData.schoolName;
+        userRole.value = userData.role;
+        currentUser.value.displayName = userData.name;
+    }
 
-            if (userDocSnap.exists()) {
-                const userData = userDocSnap.data();
-                currentUser.value = user;
-                userSchool.value = userData.school;
-                userSchoolName.value = userData.schoolName;
-                userRole.value = userData.role;
-                currentUser.value.displayName = userData.name;
-
+    async function setupRealtimeListener(user) {
+        const userDocRef = doc(db, 'users', user.uid);
+        unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                const userData = docSnapshot.data();
+                setUserData(user, userData);
                 saveUserDataSecurely({
                     uid: user.uid,
                     email: user.email,
@@ -56,14 +58,14 @@ export function useAuth() {
                     role: userData.role,
                     name: userData.name
                 });
-
-                logInfo('Datos de usuario obtenidos y guardados de forma segura');
+                logInfo('Datos de usuario actualizados en tiempo real');
+                logDebug('Datos de usuario actualizados:', { userRole: userRole.value, userSchool: userSchool.value });
             } else {
-                logError('No se encontró el documento del usuario');
+                logError('No se encontró el documento del usuario en tiempo real');
             }
-        } catch (error) {
-            logError('Error al obtener datos del usuario:', error);
-        }
+        }, (error) => {
+            logError('Error en la escucha en tiempo real:', error);
+        });
     }
 
     onMounted(() => {
@@ -73,15 +75,11 @@ export function useAuth() {
                 const localUserData = getUserDataSecurely();
 
                 if (localUserData && localUserData.uid === user.uid) {
-                    currentUser.value = user;
-                    userSchool.value = localUserData.school;
-                    userSchoolName.value = localUserData.schoolName;
-                    userRole.value = localUserData.role;
-                    currentUser.value.displayName = localUserData.name;
+                    setUserData(user, localUserData);
                     logInfo('Datos de usuario cargados de forma segura desde almacenamiento local');
-                } else {
-                    await fetchAndSetUserData(user);
                 }
+
+                await setupRealtimeListener(user);
             } else {
                 logInfo('No hay usuario autenticado');
                 clearUserDataSecurely();
@@ -89,7 +87,20 @@ export function useAuth() {
                 userSchool.value = null;
                 userSchoolName.value = null;
                 userRole.value = null;
+                if (unsubscribe) {
+                    unsubscribe();
+                    unsubscribe = null;
+                }
             }
+        });
+    });
+
+    watch([currentUser, userRole, userSchool, userSchoolName], () => {
+        logDebug('Datos de usuario actualizados:', {
+            user: currentUser.value?.email,
+            role: userRole.value,
+            school: userSchool.value,
+            schoolName: userSchoolName.value
         });
     });
 

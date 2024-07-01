@@ -2,42 +2,22 @@
 import DashButton from '@/components/DashButton.vue';
 import BaseTable from '@/components/BaseTable.vue';
 import AddAlumno from '@/dialogs/AddAlumnoDialog.vue';
-import {ref, onMounted, watch, computed} from 'vue';
-import {doc, getDoc, onSnapshot} from 'firebase/firestore';
-import {db} from '@/services/firebase.js';
-import {useAuth} from '@/services/userService.js';
-import {CirclePlus, Search} from 'lucide-vue-next';
-import {logInfo, logError, logDebug} from '@/utils/logger.js';
+import Alerta from '@/components/Alert.vue';
+import { ref, onMounted, watch, computed } from 'vue';
+import { doc, getDoc, onSnapshot, updateDoc, deleteField } from 'firebase/firestore';
+import { db } from '@/services/firebase.js';
+import { useAuth } from '@/services/userService.js';
+import { CirclePlus, Search } from 'lucide-vue-next';
+import { logInfo, logError } from '@/utils/logger.js';
 
-const {userSchool} = useAuth();
+const { userSchool } = useAuth();
 
 const columns = ['#', 'Nombre', 'Código QR', 'Turno', 'Acciones'];
 const alumnos = ref([]);
 const dialogRef = ref(null);
 const searchTerm = ref('');
-
-const pagination = ref({
-  start: 1,
-  end: 10,
-  total: 0,
-  hasPrevPage: false,
-  hasNextPage: true,
-  perPage: 10,
-  onPrevPage: () => {
-    if (pagination.value.start > 1) {
-      pagination.value.start -= pagination.value.perPage;
-      pagination.value.end = Math.min(pagination.value.start + pagination.value.perPage - 1, pagination.value.total);
-      fetchAlumnos();
-    }
-  },
-  onNextPage: () => {
-    if (pagination.value.end < pagination.value.total) {
-      pagination.value.start += pagination.value.perPage;
-      pagination.value.end = Math.min(pagination.value.start + pagination.value.perPage - 1, pagination.value.total);
-      fetchAlumnos();
-    }
-  }
-});
+const showAlertDialog = ref(false);
+const alumnoIdToDelete = ref(null);
 
 const selectedGrade = ref(localStorage.getItem('selectedGrade'));
 const selectedSection = ref(localStorage.getItem('selectedSection'));
@@ -55,17 +35,8 @@ const updateLocalStorage = (alumnosData) => {
   localStorage.setItem('alumnosData', JSON.stringify(alumnosData));
   alumnos.value = alumnosData.map((alumno, index) => ({
     ...alumno,
-    index: index + 1
+    index: index
   }));
-  updatePagination();
-};
-
-const updatePagination = () => {
-  const filteredTotal = filteredAlumnos.value.length;
-  pagination.value.total = filteredTotal;
-  pagination.value.end = Math.min(pagination.value.start + pagination.value.perPage - 1, filteredTotal);
-  pagination.value.hasPrevPage = pagination.value.start > 1;
-  pagination.value.hasNextPage = pagination.value.end < filteredTotal;
 };
 
 const fetchAlumnos = async () => {
@@ -81,7 +52,7 @@ const fetchAlumnos = async () => {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          const alumnosData = Object.values(docSnap.data());
+          const alumnosData = Object.entries(docSnap.data()).map(([index, data]) => ({ id: index, ...data }));
           updateLocalStorage(alumnosData);
         } else {
           logError("No se encontró el documento:", `${selectedGrade.value}${selectedSection.value}`);
@@ -100,7 +71,7 @@ const subscribeToChanges = () => {
     const docRef = doc(db, `colegios/${userSchool.value}/alumnos/${selectedGrade.value}${selectedSection.value}`);
     onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
-        const alumnosData = Object.values(docSnap.data());
+        const alumnosData = Object.entries(docSnap.data()).map(([index, data]) => ({ id: index, ...data }));
         updateLocalStorage(alumnosData);
       } else {
         logError("No se encontró el documento:", `${selectedGrade.value}${selectedSection.value}`);
@@ -117,6 +88,31 @@ const openDialog = () => {
   }
 };
 
+const requestEliminarAlumno = (alumnoId) => {
+  alumnoIdToDelete.value = alumnoId;
+  showAlertDialog.value = true;
+};
+
+const eliminarAlumno = async () => {
+  const alumnoId = alumnoIdToDelete.value;
+  const selectedGrade = localStorage.getItem('selectedGrade');
+  const selectedSection = localStorage.getItem('selectedSection');
+
+  if (selectedGrade && selectedSection && userSchool.value) {
+    try {
+      const docRef = doc(db, `colegios/${userSchool.value}/alumnos/${selectedGrade}${selectedSection}`);
+      await updateDoc(docRef, {
+        [alumnoId]: deleteField()
+      });
+      logInfo(`Alumno con ID ${alumnoId} eliminado`);
+      fetchAlumnos();
+    } catch (error) {
+      logError('Error al eliminar el alumno:', error);
+    }
+  }
+  showAlertDialog.value = false;
+};
+
 onMounted(() => {
   if (userSchool.value) {
     fetchAlumnos();
@@ -130,11 +126,6 @@ onMounted(() => {
     });
   }
 });
-
-watch(searchTerm, () => {
-  updatePagination();
-});
-
 </script>
 
 <template>
@@ -144,7 +135,6 @@ watch(searchTerm, () => {
         <router-link to="/aulas">
           <DashButton iconType="CircleChevronLeft" buttonText="" class="bg-color-white hover:bg-color-blue"/>
         </router-link>
-        <!-- SEARCH -->
         <div class="dark:bg-gray-900">
           <label for="table-search" class="sr-only">Buscar</label>
           <div class="relative mt-1">
@@ -168,10 +158,19 @@ watch(searchTerm, () => {
       </button>
     </div>
     <div class="container-table-alumnos">
-      <BaseTable :columns="columns" :data="filteredAlumnos" :pagination="pagination"/>
+      <BaseTable :columns="columns" :data="filteredAlumnos" @eliminarAlumno="requestEliminarAlumno" />
     </div>
+    <AddAlumno ref="dialogRef"/>
+    <Alerta
+        v-if="showAlertDialog"
+        Type="alert"
+        TitleAlert="Eliminar Alumno"
+        InfoAlert="¿Estás seguro de que deseas eliminar este alumno?"
+        ButonText="Eliminar"
+        @confirm="eliminarAlumno"
+        @close="showAlertDialog = false"
+    />
   </div>
-  <AddAlumno ref="dialogRef"/>
 </template>
 
 <style scoped>

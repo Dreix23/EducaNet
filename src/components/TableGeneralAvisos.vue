@@ -2,7 +2,7 @@
 import { defineProps, ref } from 'vue';
 import UpdateAvisoDialog from '@/dialogs/UpdateAvisoDialog.vue';
 import Alert from '@/components/Alert.vue';
-import { FilePenLine, Trash2, ChevronRight, ChevronLeft } from 'lucide-vue-next';
+import { FilePenLine, Trash2 } from 'lucide-vue-next';
 import { logInfo, logError } from '@/utils/logger.js';
 
 const props = defineProps({
@@ -33,9 +33,9 @@ const confirmDelete = (aviso) => {
 const handleDeleteConfirm = () => {
   try {
     emit('deleteAviso', avisoToDelete.value.id);
-    logInfo(`Aviso eliminado: ${avisoToDelete.value.id}`);
+    logInfo(`Solicitud de eliminación enviada para el aviso: ${avisoToDelete.value.id}`);
   } catch (error) {
-    logError(`Error al eliminar el aviso: ${error.message}`);
+    logError(`Error al solicitar la eliminación del aviso: ${error.message}`);
   } finally {
     showDeleteAlert.value = false;
     avisoToDelete.value = null;
@@ -47,6 +47,7 @@ const handleDeleteCancel = () => {
   avisoToDelete.value = null;
 };
 </script>
+
 
 <template>
   <div class="mt-6">

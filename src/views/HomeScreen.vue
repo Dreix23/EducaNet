@@ -6,7 +6,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { logInfo, logError, logDebug, enableLogs } from '@/utils/logger.js';
 import { doc, getDoc } from 'firebase/firestore';
 import logoSrc from '@/assets/Logo-blue.png';
-import { Home, LayoutGrid, UsersRound, ListChecks, Megaphone } from 'lucide-vue-next';
+import { Home, LayoutGrid, UsersRound, ListChecks, Megaphone, User } from 'lucide-vue-next';
 import Alert from '@/components/Alert.vue';
 import { useAuth } from '@/services/userService';
 import {
@@ -28,13 +28,8 @@ const router = useRouter();
 const route = useRoute()
 const isLoading = ref(true);
 
-const isAdmin = computed(() => {
-  return userRole.value === 'admin';
-});
-
-const isDirector = computed(() => {
-  return userRole.value === 'director';
-});
+const isAdmin = computed(() => userRole.value === 'admin');
+const isDirector = computed(() => userRole.value === 'director');
 
 const selectedRoute = ref('');
 
@@ -61,12 +56,7 @@ onMounted(async () => {
     logDebug('Resultado de onAuthStateChanged:', user);
     if (user) {
       logInfo('Usuario autenticado:', user.email);
-
-      if (route.path === '/') {
-        selectRoute('/inicio');
-      } else {
-        selectRoute(route.path);
-      }
+      selectRoute(route.path === '/' ? '/inicio' : route.path);
     } else {
       logInfo('Usuario no autenticado. Redirigiendo al login...');
       router.push('/login');
@@ -94,8 +84,6 @@ const logout = async () => {
     <div class="px-[32px] py-3 h-full flex nav-container">
       <div class="flex items-center justify-between w-full">
         <div class="flex items-center justify-start rtl:justify-end gap-[20px]">
-
-          <!--Btn-Toggle -->
           <button data-drawer-target="logo-sidebar" data-drawer-toggle="logo-sidebar" aria-controls="logo-sidebar"
                   type="button"
                   class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
@@ -108,33 +96,30 @@ const logout = async () => {
             </svg>
           </button>
 
-          <!-- Logo -->
           <div class="flex justify-center items-center gap-[8px]">
             <img :src="logoSrc" alt="Logo Educanet">
-            <p class="text-size-25 uppercase font-normal"><span class=" font-bold">Educa</span>net</p>
+            <p class="text-size-25 uppercase font-normal"><span class="font-bold">Educa</span>net</p>
           </div>
         </div>
-        <!-- Profile -->
         <div class="flex items-center">
           <div class="flex items-center ms-3">
-            <!-- Perfil -->
             <div class="flex items-center gap-[20px]">
               <div class="info-profile flex flex-col justify-end text-end text-color-text">
-                <span v-if="currentUser" class="text-size-18 font-bold ">{{ currentUser.email }}</span>
+                <span v-if="currentUser" class="text-size-18 font-bold">{{ currentUser.email }}</span>
                 <span class="text-size-14">{{ userRole }}</span>
               </div>
               <button type="button"
                       class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
                       aria-expanded="false" data-dropdown-toggle="dropdown-user">
-                <div class="w-[44px] h-[44px] rounded-full border border-color-text flex justify-center items-center bg-color-white">
-                  <img class="img-perfil"
-                       src="https://4.bp.blogspot.com/-oyzJQ9glbYI/V0Y4f08QC5I/AAAAAAAAxdc/4ILEsz1KLo8LVLKLvCd9yVJMepuGfSTPQCLcB/s640/ie-00884-los-olivos-insignia.jpg"
-                       alt="user photo">
+                <div class="w-[44px] h-[44px] rounded-full border border-color-text flex justify-center items-center bg-color-white overflow-hidden">
+                  <img v-if="currentUser && currentUser.profileImageUrl"
+                       :src="currentUser.profileImageUrl"
+                       :alt="currentUser.displayName || 'user photo'"
+                       class="w-full h-full object-cover">
+                  <User v-else class="w-6 h-6 text-gray-500" />
                 </div>
-
               </button>
             </div>
-            <!-- Perfil Option -->
             <div class="z-50 hidden my-4 text-base list-none bg-white divide-y profile-option text-end"
                  id="dropdown-user">
               <div class="px-5 py-3" role="none">
@@ -224,6 +209,7 @@ const logout = async () => {
     </div>
   </div>
 </template>
+
 
 <style scoped>
 .img-perfil {
